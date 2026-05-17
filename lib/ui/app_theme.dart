@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 class AppTheme {
   const AppTheme._();
 
-  static const _accent = Color(0xFF3D52F0); // ring + FAB indigo
+  static const _accent = Color(0xFF0176FD); // ring + FAB; matches the app logo blue
 
   static ThemeData light() => _build(
         brightness: Brightness.light,
