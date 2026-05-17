@@ -1,6 +1,7 @@
 name: my_tokens
 description: "MyTokens - an offline, secure TOTP authenticator."
 publish_to: 'none'
+repository: https://github.com/guilhermegsr/my_tokens
 version: 1.0.0+1
 
 environment:

@@ -7,6 +7,10 @@
 <p align="center">An offline, secure TOTP authenticator for Android.</p>
 
 <p align="center">
+  <a href="https://github.com/guilhermegsr/my_tokens/actions/workflows/ci.yml">
+    <img src="https://github.com/guilhermegsr/my_tokens/actions/workflows/ci.yml/badge.svg" alt="CI" />
+  </a>
+  <img src="https://img.shields.io/badge/License-MIT-3D52F0" alt="MIT" />
   <img src="https://img.shields.io/badge/Platform-Android-3DDC84?logo=android&logoColor=white" alt="Android" />
   <img src="https://img.shields.io/badge/Built%20with-Flutter-02569B?logo=flutter&logoColor=white" alt="Flutter" />
   <img src="https://img.shields.io/badge/100%25-Offline-1FAD6B" alt="Offline" />
