@@ -112,4 +112,57 @@ void main() {
   test('rejects invalid base32', () {
     expect(() => totp.generate('0189!'), throwsFormatException);
   });
+
+  group('Steam Guard', () {
+    // The Steam variant reuses the exact HMAC-SHA1 truncation already
+    // proven by the RFC vectors above. For the RFC SHA1 seed at T=59 the
+    // standard 8-digit code is 94287082, so the full 31-bit truncated
+    // value is 1094287082 (1094287082 % 1e8 == 94287082). Steam renders
+    // that same integer with its 26-symbol alphabet — so this vector is
+    // tied to an independently verified HMAC output, not invented.
+    const fullTruncated = 1094287082;
+    final at59 = DateTime.fromMillisecondsSinceEpoch(59 * 1000, isUtc: true);
+
+    String steamEncode(int value) {
+      const alphabet = '23456789BCDFGHJKMNPQRTVWXY';
+      final out = StringBuffer();
+      for (var i = 0; i < 5; i++) {
+        out.write(alphabet[value % alphabet.length]);
+        value ~/= alphabet.length;
+      }
+      return out.toString();
+    }
+
+    test('truncated value ties to the verified RFC HMAC output', () {
+      expect(fullTruncated % 100000000, 94287082);
+      expect(codeAt(seedSha1, 59, TotpAlgorithm.sha1), '94287082');
+    });
+
+    test('renders the expected 5-character Steam code', () {
+      final code = totp.generate(seedSha1, steam: true, at: at59).code;
+      expect(code, steamEncode(fullTruncated));
+      expect(code.length, 5);
+    });
+
+    test('only ever uses the Steam alphabet', () {
+      final code = totp
+          .generate(
+            seedSha1,
+            steam: true,
+            at: DateTime.fromMillisecondsSinceEpoch(
+              1111111109 * 1000,
+              isUtc: true,
+            ),
+          )
+          .code;
+      expect(
+        RegExp(r'^[23456789BCDFGHJKMNPQRTVWXY]{5}$').hasMatch(code),
+        isTrue,
+      );
+    });
+
+    test('does not affect the standard decimal path', () {
+      expect(totp.generate(seedSha1, at: at59).code, '287082');
+    });
+  });
 }

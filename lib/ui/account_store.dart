@@ -57,6 +57,7 @@ class AccountStore extends ChangeNotifier {
         digits: account.digits,
         period: account.period,
         algorithm: account.algorithm,
+        steam: account.kind == AccountKind.steam,
       );
 
   /// Adds [account] unless one with the same secret already exists.

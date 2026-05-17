@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_tokens/core/totp/totp_generator.dart';
+import 'package:my_tokens/data/account.dart';
 import 'package:my_tokens/data/otpauth_uri.dart';
 
 void main() {
@@ -37,6 +38,20 @@ void main() {
       () => OtpAuthUri.parse('otpauth://totp/Account', id: '4'),
       throwsFormatException,
     );
+  });
+
+  test('issuer=Steam marks the account as a Steam Guard account', () {
+    final account = OtpAuthUri.parse(
+      'otpauth://totp/Steam:player?secret=JBSWY3DPEHPK3PXP&issuer=Steam',
+      id: 's',
+    );
+    expect(account.kind, AccountKind.steam);
+
+    final regular = OtpAuthUri.parse(
+      'otpauth://totp/Google:jane?secret=JBSWY3DPEHPK3PXP&issuer=Google',
+      id: 'g',
+    );
+    expect(regular.kind, AccountKind.standard);
   });
 
   test('build and parse round-trip', () {

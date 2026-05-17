@@ -458,6 +458,36 @@ abstract class AppLocalizations {
   /// **'This setup key is not valid'**
   String get fieldSecretInvalid;
 
+  /// No description provided for @steamAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Steam account'**
+  String get steamAccount;
+
+  /// No description provided for @steamAccountHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the Steam shared_secret'**
+  String get steamAccountHint;
+
+  /// No description provided for @fieldSteamSecret.
+  ///
+  /// In en, this message translates to:
+  /// **'Steam shared_secret'**
+  String get fieldSteamSecret;
+
+  /// No description provided for @fieldSteamSecretHint.
+  ///
+  /// In en, this message translates to:
+  /// **'base64, e.g. AbCd1234…=='**
+  String get fieldSteamSecretHint;
+
+  /// No description provided for @fieldSteamSecretInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Not a valid Steam shared_secret'**
+  String get fieldSteamSecretInvalid;
+
   /// No description provided for @advancedOptions.
   ///
   /// In en, this message translates to:

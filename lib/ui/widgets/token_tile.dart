@@ -67,7 +67,9 @@ class TokenTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    formatOtpCode(code),
+                    account.kind == AccountKind.steam
+                        ? code
+                        : formatOtpCode(code),
                     style: TextStyle(
                       fontSize: 30,
                       fontWeight: FontWeight.w700,

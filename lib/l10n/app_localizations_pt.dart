@@ -211,6 +211,21 @@ class AppLocalizationsPt extends AppLocalizations {
   String get fieldSecretInvalid => 'Esta chave de configuração não é válida';
 
   @override
+  String get steamAccount => 'Conta Steam';
+
+  @override
+  String get steamAccountHint => 'Use o shared_secret da Steam';
+
+  @override
+  String get fieldSteamSecret => 'shared_secret da Steam';
+
+  @override
+  String get fieldSteamSecretHint => 'base64, ex.: AbCd1234…==';
+
+  @override
+  String get fieldSteamSecretInvalid => 'shared_secret da Steam inválido';
+
+  @override
   String get advancedOptions => 'Opções avançadas';
 
   @override

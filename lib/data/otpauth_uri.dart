@@ -33,6 +33,10 @@ class OtpAuthUri {
       label = parts.sublist(1).join(':').trim();
     }
 
+    // De-facto interop convention (Aegis/2FAS/ente): a Steam account is
+    // an otpauth URI with issuer=Steam and the secret already in base32.
+    final isSteam = issuer.toLowerCase() == 'steam';
+
     return Account(
       id: id,
       issuer: issuer,
@@ -43,6 +47,7 @@ class OtpAuthUri {
       algorithm: totpAlgorithmFromName(
         parsed.queryParameters['algorithm'] ?? 'SHA1',
       ),
+      kind: isSteam ? AccountKind.steam : AccountKind.standard,
     );
   }
 

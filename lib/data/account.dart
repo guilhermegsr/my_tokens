@@ -1,5 +1,13 @@
 import '../core/totp/totp_generator.dart';
 
+/// [standard] is RFC 6238 TOTP. [steam] is Steam Guard: same HMAC-SHA1
+/// truncation, rendered as a 5-character Steam-alphabet code; its secret
+/// is stored already normalized to base32.
+enum AccountKind { standard, steam }
+
+AccountKind _accountKindFromName(String? name) =>
+    name == 'steam' ? AccountKind.steam : AccountKind.standard;
+
 /// A TOTP account. [secret] is the base32 shared secret; it only ever
 /// exists in memory and inside the encrypted vault, never as plaintext.
 class Account {
@@ -11,6 +19,7 @@ class Account {
     this.digits = 6,
     this.period = 30,
     this.algorithm = TotpAlgorithm.sha1,
+    this.kind = AccountKind.standard,
   });
 
   factory Account.fromJson(Map<String, dynamic> json) => Account(
@@ -22,6 +31,7 @@ class Account {
         period: (json['period'] as int?) ?? 30,
         algorithm:
             totpAlgorithmFromName((json['algorithm'] as String?) ?? 'SHA1'),
+        kind: _accountKindFromName(json['kind'] as String?),
       );
 
   final String id;
@@ -31,14 +41,20 @@ class Account {
   final int digits;
   final int period;
   final TotpAlgorithm algorithm;
+  final AccountKind kind;
 
   /// List header text, e.g. "Google : jane.doe@gmail.com".
   String get displayName => issuer.isEmpty ? label : '$issuer : $label';
 
   /// Stable cryptographic identity: two accounts with the same shared
   /// secret are the same account, regardless of id or label. Used to keep
-  /// the same account from being added twice.
-  String get identity => secret.replaceAll(' ', '').toUpperCase();
+  /// the same account from being added twice. Steam accounts are a
+  /// distinct namespace — the same bytes render a different code, so they
+  /// are not the same credential as a standard TOTP account.
+  String get identity {
+    final normalized = secret.replaceAll(' ', '').toUpperCase();
+    return kind == AccountKind.steam ? 'steam:$normalized' : normalized;
+  }
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -48,6 +64,9 @@ class Account {
         'digits': digits,
         'period': period,
         'algorithm': totpAlgorithmName(algorithm),
+        // Omitted for standard accounts so existing vault/backup records
+        // serialize byte-for-byte as before.
+        if (kind == AccountKind.steam) 'kind': 'steam',
       };
 
   Account copyWith({String? issuer, String? label, String? secret}) => Account(
@@ -58,5 +77,6 @@ class Account {
         digits: digits,
         period: period,
         algorithm: algorithm,
+        kind: kind,
       );
 }

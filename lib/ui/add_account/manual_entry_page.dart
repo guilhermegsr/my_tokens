@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 
 import '../../core/totp/totp_generator.dart';
@@ -25,6 +27,7 @@ class _ManualEntryPageState extends State<ManualEntryPage> {
   int _period = 30;
   TotpAlgorithm _algorithm = TotpAlgorithm.sha1;
   bool _showAdvanced = false;
+  bool _steam = false;
 
   @override
   void dispose() {
@@ -36,11 +39,34 @@ class _ManualEntryPageState extends State<ManualEntryPage> {
 
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
+    final issuer = _issuerController.text.trim();
+    final label = _labelController.text.trim();
+
+    if (_steam) {
+      // The Steam shared_secret is base64; store it as base32 so the rest
+      // of the app (generation, dedup, backup) stays on one encoding.
+      final bytes = base64.decode(
+        base64.normalize(_secretController.text.trim()),
+      );
+      Navigator.of(context).pop(
+        Account(
+          id: AddAccountFlow.newAccountId(),
+          issuer: issuer.isEmpty ? 'Steam' : issuer,
+          label: label,
+          secret: base32Encode(bytes),
+          period: 30,
+          algorithm: TotpAlgorithm.sha1,
+          kind: AccountKind.steam,
+        ),
+      );
+      return;
+    }
+
     Navigator.of(context).pop(
       Account(
         id: AddAccountFlow.newAccountId(),
-        issuer: _issuerController.text.trim(),
-        label: _labelController.text.trim(),
+        issuer: issuer,
+        label: label,
         secret: _secretController.text.replaceAll(' ', '').toUpperCase(),
         digits: _digits,
         period: _period,
@@ -53,6 +79,15 @@ class _ManualEntryPageState extends State<ManualEntryPage> {
     final l10n = AppLocalizations.of(context);
     final secret = (value ?? '').trim();
     if (secret.isEmpty) return l10n.fieldSecretRequired;
+    if (_steam) {
+      try {
+        // Steam's shared_secret decodes to a 20-byte HMAC-SHA1 key.
+        final bytes = base64.decode(base64.normalize(secret));
+        return bytes.length == 20 ? null : l10n.fieldSteamSecretInvalid;
+      } on FormatException {
+        return l10n.fieldSteamSecretInvalid;
+      }
+    }
     try {
       // Round-trip through the generator: cheapest correct base32 check.
       const TotpGenerator().generate(secret);
@@ -72,6 +107,14 @@ class _ManualEntryPageState extends State<ManualEntryPage> {
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(l10n.steamAccount),
+              subtitle: Text(l10n.steamAccountHint),
+              value: _steam,
+              onChanged: (v) => setState(() => _steam = v),
+            ),
+            const SizedBox(height: 8),
             TextFormField(
               controller: _issuerController,
               textCapitalization: TextCapitalization.words,
@@ -96,79 +139,86 @@ class _ManualEntryPageState extends State<ManualEntryPage> {
               controller: _secretController,
               autocorrect: false,
               decoration: InputDecoration(
-                labelText: l10n.fieldSecret,
-                hintText: l10n.fieldSecretHint,
+                labelText: _steam ? l10n.fieldSteamSecret : l10n.fieldSecret,
+                hintText:
+                    _steam ? l10n.fieldSteamSecretHint : l10n.fieldSecretHint,
               ),
               validator: _validateSecret,
             ),
             const SizedBox(height: 16),
-            _AdvancedHeader(
-              label: l10n.advancedOptions,
-              expanded: _showAdvanced,
-              onTap: () => setState(() => _showAdvanced = !_showAdvanced),
-            ),
-            AnimatedCrossFade(
-              duration: const Duration(milliseconds: 220),
-              crossFadeState: _showAdvanced
-                  ? CrossFadeState.showSecond
-                  : CrossFadeState.showFirst,
-              firstChild: const SizedBox(width: double.infinity),
-              secondChild: Padding(
-                padding: const EdgeInsets.only(top: 16),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: DropdownButtonFormField<int>(
-                            initialValue: _digits,
-                            decoration: InputDecoration(
-                              labelText: l10n.fieldDigits,
+            // Steam fixes SHA1 / 30s / 5-char output, so the advanced
+            // TOTP parameters don't apply.
+            if (!_steam) ...[
+              _AdvancedHeader(
+                label: l10n.advancedOptions,
+                expanded: _showAdvanced,
+                onTap: () => setState(() => _showAdvanced = !_showAdvanced),
+              ),
+              AnimatedCrossFade(
+                duration: const Duration(milliseconds: 220),
+                crossFadeState: _showAdvanced
+                    ? CrossFadeState.showSecond
+                    : CrossFadeState.showFirst,
+                firstChild: const SizedBox(width: double.infinity),
+                secondChild: Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: DropdownButtonFormField<int>(
+                              initialValue: _digits,
+                              decoration: InputDecoration(
+                                labelText: l10n.fieldDigits,
+                              ),
+                              items: const [
+                                DropdownMenuItem(value: 6, child: Text('6')),
+                                DropdownMenuItem(value: 8, child: Text('8')),
+                              ],
+                              onChanged: (v) =>
+                                  setState(() => _digits = v ?? 6),
                             ),
-                            items: const [
-                              DropdownMenuItem(value: 6, child: Text('6')),
-                              DropdownMenuItem(value: 8, child: Text('8')),
-                            ],
-                            onChanged: (v) => setState(() => _digits = v ?? 6),
                           ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: DropdownButtonFormField<int>(
-                            initialValue: _period,
-                            decoration: InputDecoration(
-                              labelText: l10n.fieldPeriod,
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: DropdownButtonFormField<int>(
+                              initialValue: _period,
+                              decoration: InputDecoration(
+                                labelText: l10n.fieldPeriod,
+                              ),
+                              items: const [
+                                DropdownMenuItem(value: 30, child: Text('30')),
+                                DropdownMenuItem(value: 60, child: Text('60')),
+                              ],
+                              onChanged: (v) =>
+                                  setState(() => _period = v ?? 30),
                             ),
-                            items: const [
-                              DropdownMenuItem(value: 30, child: Text('30')),
-                              DropdownMenuItem(value: 60, child: Text('60')),
-                            ],
-                            onChanged: (v) => setState(() => _period = v ?? 30),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    DropdownButtonFormField<TotpAlgorithm>(
-                      initialValue: _algorithm,
-                      decoration: InputDecoration(
-                        labelText: l10n.fieldAlgorithm,
+                        ],
                       ),
-                      items: TotpAlgorithm.values
-                          .map(
-                            (a) => DropdownMenuItem(
-                              value: a,
-                              child: Text(totpAlgorithmName(a)),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (v) =>
-                          setState(() => _algorithm = v ?? TotpAlgorithm.sha1),
-                    ),
-                  ],
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<TotpAlgorithm>(
+                        initialValue: _algorithm,
+                        decoration: InputDecoration(
+                          labelText: l10n.fieldAlgorithm,
+                        ),
+                        items: TotpAlgorithm.values
+                            .map(
+                              (a) => DropdownMenuItem(
+                                value: a,
+                                child: Text(totpAlgorithmName(a)),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (v) => setState(
+                            () => _algorithm = v ?? TotpAlgorithm.sha1),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
+            ],
             const SizedBox(height: 32),
             FilledButton(
               onPressed: _submit,
