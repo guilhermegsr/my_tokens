@@ -25,39 +25,30 @@
 
 ## About
 
-**MyTokens** generates the 6–8 digit verification codes (TOTP, RFC 6238)
-for your two-factor accounts — the same kind of codes other authenticator
-apps produce. It runs **completely offline** and keeps every secret
-encrypted on your device. Nothing ever leaves your phone.
+MyTokens generates the 6–8 digit verification codes (TOTP, RFC 6238) for
+your two-factor accounts. It runs completely offline and keeps every
+secret encrypted on your device — nothing ever leaves your phone.
 
-## ✨ Features
+## Features
 
-- 🔢 TOTP codes (SHA1/256/512, 6–8 digits, custom period)
-- 📷 Add accounts by QR scan or manual entry
-- 🚫 The same account can't be added twice
-- 🗄️ Encrypted, password-protected backup (export / import)
-- 👆 Biometric / device lock with configurable timeout
-- 🌗 Light & dark theme
-- 🕒 Out-of-sync clock warning
-- 🌎 English & Portuguese (follows the device language)
+- TOTP codes (SHA1/256/512, 6–8 digits, custom period)
+- Add accounts by QR scan or manual entry; duplicates are rejected
+- Encrypted, password-protected backup (export / import)
+- Biometric / device lock with configurable timeout
+- Light and dark theme
+- Out-of-sync clock warning
+- English and Portuguese (follows the device language)
 
-## 🔒 Security
+## Security
 
-- **No internet permission** — minimal attack surface, nothing is sent anywhere
-- Secrets live only in an **AES-256-GCM** vault; the key is kept in the
-  Android Keystore, never in cleartext
-- Backups are encrypted with your password via **Argon2id**
+- No internet permission — nothing is sent anywhere
+- Secrets stored in an AES-256-GCM vault; the key is kept in the Android
+  Keystore, never in cleartext
+- Backups encrypted with your password via Argon2id
 - Screenshots and the app-switcher preview are blocked
 
-## ⬇️ Download
+## Download
 
 Get the latest signed APK from the
-[**Releases**](https://github.com/guilhermegsr/my_tokens/releases/latest)
-page:
-
-1. Download `app-release.apk`.
-2. Allow installing from unknown sources when prompted.
-3. Open the app and add your accounts.
-
-> Tip: [Obtainium](https://github.com/ImranR98/Obtainium) can track this
-> repository and update MyTokens automatically on new releases.
+[Releases](https://github.com/guilhermegsr/my_tokens/releases/latest)
+page, allow installing from unknown sources, and open the app.
