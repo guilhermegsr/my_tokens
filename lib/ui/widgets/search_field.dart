@@ -11,7 +11,9 @@ class SearchField extends StatelessWidget {
     required this.controller,
     required this.focusNode,
     required this.isActive,
+    required this.tokensHidden,
     required this.onOpenMenu,
+    required this.onToggleHidden,
     required this.onActivate,
     required this.onCancel,
     required this.onChanged,
@@ -20,7 +22,9 @@ class SearchField extends StatelessWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
   final bool isActive;
+  final bool tokensHidden;
   final VoidCallback onOpenMenu;
+  final VoidCallback onToggleHidden;
   final VoidCallback onActivate;
   final VoidCallback onCancel;
   final ValueChanged<String> onChanged;
@@ -84,6 +88,24 @@ class SearchField extends StatelessWidget {
               },
               child: Icon(Icons.cancel, size: 20, color: palette.subtitle),
             ),
+          if (!isActive) ...[
+            const SizedBox(width: 12),
+            Container(width: 1, height: 22, color: palette.divider),
+            const SizedBox(width: 12),
+            Tooltip(
+              message: tokensHidden ? l10n.showTokens : l10n.hideTokens,
+              child: InkResponse(
+                onTap: onToggleHidden,
+                child: Icon(
+                  tokensHidden
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+                  size: 22,
+                  color: palette.title,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

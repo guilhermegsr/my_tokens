@@ -27,6 +27,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   final _searchController = TextEditingController();
   final _searchFocusNode = FocusNode();
   bool _isSearching = false;
+  bool _tokensHidden = false;
   bool _clockSuspect = false;
   bool _clockWarningDismissed = false;
 
@@ -62,6 +63,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   void _activateSearch() {
     setState(() => _isSearching = true);
     _searchFocusNode.requestFocus();
+  }
+
+  void _toggleTokensHidden() {
+    setState(() => _tokensHidden = !_tokensHidden);
   }
 
   void _cancelSearch() {
@@ -170,7 +175,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 controller: _searchController,
                 focusNode: _searchFocusNode,
                 isActive: _isSearching,
+                tokensHidden: _tokensHidden,
                 onOpenMenu: () => _scaffoldKey.currentState?.openDrawer(),
+                onToggleHidden: _toggleTokensHidden,
                 onActivate: _activateSearch,
                 onCancel: _cancelSearch,
                 onChanged: store.search,
@@ -234,6 +241,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                                 account: account,
                                 code: totp.code,
                                 secondsRemaining: totp.secondsRemaining,
+                                hidden: _tokensHidden,
                               ),
                             );
                           },

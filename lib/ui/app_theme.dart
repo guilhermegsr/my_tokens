@@ -42,6 +42,11 @@ class AppTheme {
       colorScheme: scheme,
       scaffoldBackgroundColor: background,
       dividerColor: divider,
+      // No "pressed" ripple/highlight on any tappable surface — taps stay
+      // visually flat across buttons, the FAB and the token/search rows.
+      splashFactory: NoSplash.splashFactory,
+      splashColor: Colors.transparent,
+      highlightColor: Colors.transparent,
       extensions: [
         AppPalette(
           title: title,

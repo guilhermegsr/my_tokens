@@ -21,11 +21,16 @@ class TokenTile extends StatelessWidget {
     required this.account,
     required this.code,
     required this.secondsRemaining,
+    this.hidden = false,
   });
 
   final Account account;
   final String code;
   final int secondsRemaining;
+
+  /// When true the digits are masked behind bullets; tapping still copies
+  /// the real code so "hidden" is a shoulder-surfing guard, not a lock.
+  final bool hidden;
 
   Future<void> _copyToClipboard() async {
     final value = code.replaceAll(' ', '');
@@ -67,7 +72,9 @@ class TokenTile extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    formatOtpCode(code),
+                    hidden
+                        ? formatOtpCode('•' * code.length)
+                        : formatOtpCode(code),
                     style: TextStyle(
                       fontSize: 30,
                       fontWeight: FontWeight.w700,
