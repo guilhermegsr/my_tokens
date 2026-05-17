@@ -116,6 +116,18 @@ abstract class AppLocalizations {
   /// **'Cancel'**
   String get searchCancel;
 
+  /// No description provided for @hideTokens.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide codes'**
+  String get hideTokens;
+
+  /// No description provided for @showTokens.
+  ///
+  /// In en, this message translates to:
+  /// **'Show codes'**
+  String get showTokens;
+
   /// No description provided for @accountsFound.
   ///
   /// In en, this message translates to:

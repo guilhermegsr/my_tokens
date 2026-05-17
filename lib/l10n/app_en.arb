@@ -4,6 +4,8 @@
 
   "searchHint": "Search accounts",
   "searchCancel": "Cancel",
+  "hideTokens": "Hide codes",
+  "showTokens": "Show codes",
   "accountsFound": "{count, plural, =0{No accounts found} =1{1 account found} other{{count} accounts found}}",
   "@accountsFound": {
     "placeholders": { "count": { "type": "int" } }

@@ -18,6 +18,12 @@ class AppLocalizationsPt extends AppLocalizations {
   String get searchCancel => 'Cancelar';
 
   @override
+  String get hideTokens => 'Ocultar códigos';
+
+  @override
+  String get showTokens => 'Mostrar códigos';
+
+  @override
   String accountsFound(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
