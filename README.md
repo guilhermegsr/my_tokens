@@ -35,13 +35,16 @@ flutter run
 To change UI strings, edit `lib/l10n/app_en.arb` and `app_pt.arb`, then
 `flutter gen-l10n`.
 
-## Release build
+## Install / distribute
+
+No app store needed. Distribute the signed APK via **GitHub Releases**:
 
 ```bash
 flutter build apk --release
 # build/app/outputs/flutter-apk/app-release.apk
 ```
 
-Install the APK directly on the device. Signing setup (keystore +
-`key.properties`) is described in `RELEASE.md`; without it the build
-falls back to debug signing.
+Attach that `.apk` to a GitHub Release. Users enable "install from
+unknown sources" and install it directly; apps like Obtainium can then
+auto-update straight from the repository. Signing setup is in
+`RELEASE.md`.

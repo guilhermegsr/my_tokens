@@ -1,7 +1,7 @@
-# Building a signed release APK
+# Releasing MyTokens
 
 App ID: `net.guilhermegomes.mytokens`. The version lives in
-`pubspec.yaml` (`1.0.0+1`); bump the `+N` build number on each build.
+`pubspec.yaml` (`1.0.0+1`); bump the `+N` build number on each release.
 
 ## 1. Create the keystore (once)
 
@@ -35,8 +35,13 @@ debug signing when it doesn't (so `flutter run` keeps working).
 flutter build apk --release
 ```
 
-Output: `build/app/outputs/flutter-apk/app-release.apk`. Install it on
-the device (enable installing from unknown sources).
+Output: `build/app/outputs/flutter-apk/app-release.apk`.
 
 > Building without the Android NDK prints a harmless "failed to strip
 > debug symbols" warning; the APK is still produced.
+
+## 4. Distribute via GitHub Releases
+
+Create a GitHub Release (tag e.g. `v1.0.0`) and attach the `.apk`. Users
+enable "install from unknown sources" and install it directly. Obtainium
+can track the repository and auto-update on new releases.
