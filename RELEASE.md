@@ -1,47 +1,42 @@
-# Releasing MyTokens
+# Release
 
-App ID: `net.guilhermegomes.mytokens`. The version lives in
-`pubspec.yaml` (`1.0.0+1`); bump the `+N` build number on each release.
+Application ID `net.guilhermegomes.mytokens`. Version is set in
+`pubspec.yaml` (`x.y.z+build`); bump the build number every release.
 
-## 1. Create the keystore (once)
+## Signing
 
-Interactive — run it yourself:
+Release builds are signed when `android/key.properties` exists,
+otherwise the debug key is used (so `flutter run` keeps working).
 
-```bash
+Generate the upload keystore once and back up the `.jks` and its
+passwords — losing them makes signed updates over an installed version
+impossible:
+
+```
 keytool -genkey -v -keystore ~/mytokens.jks \
   -keyalg RSA -keysize 2048 -validity 10000 -alias upload
 ```
 
-Keep the `.jks` and its passwords backed up. Losing them means you can
-no longer ship signed updates that install over an existing version.
-
-## 2. Wire the keystore
-
-Create `android/key.properties` (git-ignored) with your real values:
+Then create `android/key.properties` (git-ignored):
 
 ```
-storePassword=<store password>
-keyPassword=<key password>
+storePassword=...
+keyPassword=...
 keyAlias=upload
 storeFile=/absolute/path/to/mytokens.jks
 ```
 
-The build uses release signing automatically when this file exists, and
-debug signing when it doesn't (so `flutter run` keeps working).
+## Build
 
-## 3. Build
-
-```bash
+```
 flutter build apk --release
 ```
 
-Output: `build/app/outputs/flutter-apk/app-release.apk`.
+Artifact: `build/app/outputs/flutter-apk/app-release.apk`. Building
+without the Android NDK emits a harmless strip-symbols warning; the APK
+is still produced.
 
-> Building without the Android NDK prints a harmless "failed to strip
-> debug symbols" warning; the APK is still produced.
+## Publish
 
-## 4. Distribute via GitHub Releases
-
-Create a GitHub Release (tag e.g. `v1.0.0`) and attach the `.apk`. Users
-enable "install from unknown sources" and install it directly. Obtainium
-can track the repository and auto-update on new releases.
+Tag the release (`vX.Y.Z`), create a GitHub Release, and attach the
+signed APK. Obtainium tracks the repository for automatic updates.

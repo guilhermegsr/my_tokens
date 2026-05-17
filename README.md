@@ -4,9 +4,7 @@
 
 <h1 align="center">MyTokens</h1>
 
-<p align="center">
-  A simple, offline and secure two-factor authentication app for Android.
-</p>
+<p align="center">An offline, secure TOTP authenticator for Android.</p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Platform-Android-3DDC84?logo=android&logoColor=white" alt="Android" />
@@ -23,32 +21,35 @@
 
 ---
 
-## About
-
-MyTokens generates the 6–8 digit verification codes (TOTP, RFC 6238) for
-your two-factor accounts. It runs completely offline and keeps every
-secret encrypted on your device — nothing ever leaves your phone.
+MyTokens generates TOTP verification codes (RFC 6238) for two-factor
+accounts. It has no internet permission: every secret stays encrypted
+on the device and nothing is ever transmitted.
 
 ## Features
 
-- TOTP codes (SHA1/256/512, 6–8 digits, custom period)
-- Add accounts by QR scan or manual entry; duplicates are rejected
-- Encrypted, password-protected backup (export / import)
+- TOTP codes — SHA1/256/512, 6–8 digits, custom period
+- QR scan or manual entry, with duplicate rejection
+- Password-encrypted backup export / import
 - Biometric / device lock with configurable timeout
-- Light and dark theme
-- Out-of-sync clock warning
-- English and Portuguese (follows the device language)
+- Out-of-sync clock detection
+- Light and dark themes
+- English and Portuguese, following the device locale
 
 ## Security
 
-- No internet permission — nothing is sent anywhere
-- Secrets stored in an AES-256-GCM vault; the key is kept in the Android
-  Keystore, never in cleartext
-- Backups encrypted with your password via Argon2id
+- No internet permission; no telemetry
+- Secrets in an AES-256-GCM vault; key held in the Android Keystore,
+  never written in cleartext
+- Backups encrypted with the user password via Argon2id
 - Screenshots and the app-switcher preview are blocked
 
-## Download
+## Build
 
-Get the latest signed APK from the
-[Releases](https://github.com/guilhermegsr/my_tokens/releases/latest)
-page, allow installing from unknown sources, and open the app.
+Requires the Flutter SDK.
+
+```
+flutter pub get
+flutter build apk --release
+```
+
+Release signing and publishing are documented in [RELEASE.md](RELEASE.md).
