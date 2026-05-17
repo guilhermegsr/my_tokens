@@ -1,66 +1,42 @@
-# Releasing MyTokens to Google Play
+# Building a signed release APK
 
-App ID: `net.guilhermegomes.mytokens` · Version: see `pubspec.yaml`
-(`1.0.0+1`). Bump the `+N` build number on every upload.
+App ID: `net.guilhermegomes.mytokens`. The version lives in
+`pubspec.yaml` (`1.0.0+1`); bump the `+N` build number on each build.
 
-## 1. Create the upload keystore (once)
+## 1. Create the keystore (once)
 
-Run this yourself (interactive — it asks for passwords):
+Interactive — run it yourself:
 
-```
-keytool -genkey -v -keystore ~/mytokens-upload.jks \
+```bash
+keytool -genkey -v -keystore ~/mytokens.jks \
   -keyalg RSA -keysize 2048 -validity 10000 -alias upload
 ```
 
-Keep the `.jks` and its passwords safe and backed up. Losing them means
-you can no longer update the app.
+Keep the `.jks` and its passwords backed up. Losing them means you can
+no longer ship signed updates that install over an existing version.
 
 ## 2. Wire the keystore
 
-Copy `android/key.properties.example` to `android/key.properties` and fill
-in the real values (`storeFile` = absolute path to the `.jks`).
-
-`key.properties` and `*.jks` are git-ignored. The Gradle build uses the
-release signing config automatically when `key.properties` exists, and
-falls back to debug signing when it doesn't (so plain `flutter run` keeps
-working).
-
-## 3. Build the App Bundle
+Create `android/key.properties` (git-ignored) with your real values:
 
 ```
-flutter build appbundle --release
+storePassword=<store password>
+keyPassword=<key password>
+keyAlias=upload
+storeFile=/absolute/path/to/mytokens.jks
 ```
 
-Output: `build/app/outputs/bundle/release/app-release.aab`. Upload this
-`.aab` (not an APK) to the Play Console.
+The build uses release signing automatically when this file exists, and
+debug signing when it doesn't (so `flutter run` keeps working).
 
-> Note: building inside this dev sandbox prints "failed to strip debug
-> symbols" because the Android NDK isn't installed here. On a normal
-> machine with the NDK the symbols are stripped and the bundle is much
-> smaller. It is not a code problem.
+## 3. Build
 
-## 4. Play Console — done outside this repo
+```bash
+flutter build apk --release
+```
 
-These are manual and cannot be automated from code:
+Output: `build/app/outputs/flutter-apk/app-release.apk`. Install it on
+the device (enable installing from unknown sources).
 
-- [ ] Developer account ($25, one-time).
-- [ ] **Privacy policy URL** — host `PRIVACY.md` (e.g.
-      `https://guilhermegomes.net/mytokens/privacy`) and paste the URL.
-- [ ] **Data safety form** — declare: no data collected, no data shared,
-      app works offline (matches `PRIVACY.md`).
-- [ ] Store listing: title, short & full description, app icon 512×512,
-      feature graphic 1024×500, phone screenshots.
-- [ ] Content rating questionnaire.
-- [ ] Target audience & content.
-- [ ] For new personal accounts: closed test with 12 testers for 14 days
-      before production access.
-
-## Already handled in the codebase
-
-- Unique application ID (`net.guilhermegomes.mytokens`), package + Kotlin
-  namespace renamed.
-- Release signing config (keystore-driven, with safe debug fallback).
-- Branded adaptive launcher icon (indigo shield, app accent `#3D52F0`).
-- Version set to `1.0.0+1`.
-- Offline guarantees: no `INTERNET` permission; `FLAG_SECURE` blocks
-  screenshots/recents; vault AES-256-GCM with key in Keystore/Keychain.
+> Building without the Android NDK prints a harmless "failed to strip
+> debug symbols" warning; the APK is still produced.

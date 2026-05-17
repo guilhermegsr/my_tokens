@@ -27,7 +27,7 @@ An offline, secure TOTP authenticator (RFC 6238). Bilingual UI
 
 ```bash
 flutter pub get
-flutter test       # 23 tests, incl. official RFC 6238 vectors
+flutter test       # incl. official RFC 6238 vectors
 flutter analyze
 flutter run
 ```
@@ -35,20 +35,13 @@ flutter run
 To change UI strings, edit `lib/l10n/app_en.arb` and `app_pt.arb`, then
 `flutter gen-l10n`.
 
-## Install / distribute
-
-No Google Play account is required — distribute the signed APK via
-**GitHub Releases**:
+## Release build
 
 ```bash
 flutter build apk --release
 # build/app/outputs/flutter-apk/app-release.apk
 ```
 
-Attach that `.apk` to a GitHub Release. Users enable "install from
-unknown sources" and install it directly (apps like Obtainium can then
-auto-update from the repo). Release signing setup is in `RELEASE.md`.
-
-## License
-
-See `LICENSE` if present; otherwise all rights reserved.
+Install the APK directly on the device. Signing setup (keystore +
+`key.properties`) is described in `RELEASE.md`; without it the build
+falls back to debug signing.
