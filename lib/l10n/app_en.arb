@@ -1,0 +1,120 @@
+{
+  "@@locale": "en",
+  "appTitle": "MyTokens",
+
+  "searchHint": "Search accounts",
+  "searchCancel": "Cancel",
+  "accountsFound": "{count, plural, =0{No accounts found} =1{1 account found} other{{count} accounts found}}",
+  "@accountsFound": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "emptyTitle": "No accounts yet",
+  "emptyBody": "Add an account to start generating verification codes.",
+  "emptySearch": "No accounts match your search.",
+  "codeCopied": "Code copied to clipboard",
+
+  "unlockTitle": "MyTokens is locked",
+  "unlockReason": "Verify your identity to access your codes",
+  "unlockButton": "Unlock",
+
+  "removeAccountTitle": "Remove account",
+  "removeAccountMessage": "Remove \"{account}\"? This account cannot be recovered unless you have a backup.",
+  "@removeAccountMessage": {
+    "placeholders": { "account": { "type": "String" } }
+  },
+
+  "actionCancel": "Cancel",
+  "actionRemove": "Remove",
+  "actionContinue": "Continue",
+  "actionSave": "Save changes",
+  "actionDismiss": "Dismiss",
+
+  "clockWarningTitle": "Device clock may be wrong",
+  "clockWarningBody": "Your clock seems to have moved backwards. Verification codes depend on the correct time and may not work until it is fixed.",
+
+  "editAccountTitle": "Edit account",
+  "editAccountSubtitle": "Update how this account is labeled",
+  "accountUpdated": "\"{account}\" updated",
+  "@accountUpdated": {
+    "placeholders": { "account": { "type": "String" } }
+  },
+
+  "drawerTitle": "MyTokens",
+  "drawerExport": "Export",
+  "drawerExportSubtitle": "Save an encrypted copy of your accounts",
+  "drawerImport": "Import",
+  "drawerImportSubtitle": "Restore accounts from a backup file",
+  "drawerSettings": "Settings",
+  "drawerSettingsSubtitle": "Lock and appearance",
+
+  "settingsTitle": "Settings",
+  "settingsSecurity": "Security",
+  "settingsAppLock": "App lock",
+  "settingsAppLockSubtitle": "Require biometrics or device unlock to open MyTokens",
+  "settingsAutoLock": "Lock when app leaves",
+  "settingsLockImmediately": "Immediately",
+  "settingsLockAfter30s": "After 30 seconds",
+  "settingsLockAfter1m": "After 1 minute",
+  "settingsLockAfter5m": "After 5 minutes",
+  "settingsAppearance": "Appearance",
+  "settingsThemeSystem": "System",
+  "settingsThemeLight": "Light",
+  "settingsThemeDark": "Dark",
+  "appVersionLabel": "MyTokens · v{version}",
+  "@appVersionLabel": {
+    "placeholders": { "version": { "type": "String" } }
+  },
+
+  "addScanTitle": "Scan QR code",
+  "addScanSubtitle": "Use the QR code provided by the service",
+  "addManualTitle": "Enter manually",
+  "addManualSubtitle": "Enter the setup key by hand",
+  "accountAdded": "\"{account}\" was added",
+  "@accountAdded": {
+    "placeholders": { "account": { "type": "String" } }
+  },
+  "accountDuplicate": "This account is already in MyTokens.",
+  "scanInstruction": "Align the QR code within the frame",
+
+  "fieldIssuer": "Service",
+  "fieldIssuerHint": "Google, GitHub…",
+  "fieldAccount": "Account",
+  "fieldAccountHint": "you@email.com",
+  "fieldAccountRequired": "Please enter an account name",
+  "fieldSecret": "Setup key",
+  "fieldSecretHint": "JBSWY3DPEHPK3PXP",
+  "fieldSecretRequired": "Please enter the setup key",
+  "fieldSecretInvalid": "This setup key is not valid",
+  "advancedOptions": "Advanced options",
+  "fieldDigits": "Digits",
+  "fieldPeriod": "Interval (s)",
+  "fieldAlgorithm": "Algorithm",
+  "addAccountButton": "Add account",
+
+  "backupShareSubject": "MyTokens backup",
+  "backupNoAccounts": "There are no accounts to back up.",
+  "backupNotMyTokens": "This file is not a valid MyTokens backup.",
+  "backupWrongPassword": "Incorrect password, or the backup has been altered.",
+  "backupCorrupted": "The selected file is invalid or corrupted.",
+  "backupFailed": "Could not complete the operation. Please try again.",
+  "backupWorking": "Working…",
+  "backupImported": "{count, plural, =0{No new accounts to import.} =1{1 account imported successfully.} other{{count} accounts imported successfully.}}",
+  "@backupImported": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "backupPasswordTitle": "Backup password",
+  "backupPasswordSetHint": "Choose a password to protect this backup. Without it, the backup cannot be restored.",
+  "backupPasswordEnterHint": "Enter the password used when this backup was created.",
+  "fieldPassword": "Password",
+  "fieldPasswordConfirm": "Confirm password",
+  "fieldPasswordTooShort": "Use at least 6 characters",
+  "fieldPasswordMismatch": "The passwords do not match",
+
+  "importConflictTitle": "Some accounts already exist",
+  "importConflictQuestion": "{count, plural, =1{1 account in this backup is already on this device. Replace it with the backup version, or keep the one you have?} other{{count} accounts in this backup are already on this device. Replace them with the backup versions, or keep the ones you have?}}",
+  "@importConflictQuestion": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "importReplaceWithBackup": "Use backup",
+  "importKeepExisting": "Keep mine"
+}
