@@ -48,3 +48,12 @@ app.*.map.json
 **/android/key.properties
 *.jks
 *.keystore
+
+# Defensive — sensitive material that must never be committed
+*.mytokens
+.env
+*.pem
+*.p12
+*.mobileprovision
+*.certSigningRequest
+**/secrets.dart
