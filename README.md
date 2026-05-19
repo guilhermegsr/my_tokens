@@ -47,9 +47,16 @@ on the device and nothing is ever transmitted.
 - Backups encrypted with the user password via Argon2id
 - Screenshots and the app-switcher preview are blocked
 
-## Build
+## Install
 
-Requires the Flutter SDK.
+Download the signed APK from the
+[latest release](https://github.com/guilhermegsr/my_tokens/releases/latest)
+and install it on your Android device. No Play Store account, build tooling,
+or developer setup required.
+
+### Build from source (optional)
+
+Only needed for development. Requires the Flutter SDK.
 
 ```
 flutter pub get
