@@ -39,6 +39,40 @@ void main() {
     );
   });
 
+  test('rejects period=0 (would divide-by-zero on every render)', () {
+    expect(
+      () => OtpAuthUri.parse(
+        'otpauth://totp/A?secret=JBSWY3DPEHPK3PXP&period=0',
+        id: '6',
+      ),
+      throwsFormatException,
+    );
+  });
+
+  test('rejects an absurd digits value (CPU/memory exhaustion)', () {
+    expect(
+      () => OtpAuthUri.parse(
+        'otpauth://totp/A?secret=JBSWY3DPEHPK3PXP&digits=999999999',
+        id: '7',
+      ),
+      throwsFormatException,
+    );
+  });
+
+  test('generator never crashes on out-of-range params (last-resort guard)',
+      () {
+    const gen = TotpGenerator();
+    // period=0 must not throw IntegerDivisionByZeroException.
+    expect(
+      () => gen.generate('JBSWY3DPEHPK3PXP', period: 0).code,
+      returnsNormally,
+    );
+    expect(
+      () => gen.generate('JBSWY3DPEHPK3PXP', digits: 1 << 30).code,
+      returnsNormally,
+    );
+  });
+
   test('build and parse round-trip', () {
     final original = OtpAuthUri.parse(
       'otpauth://totp/GitHub:janedoe?secret=JBSWY3DPEHPK3PXP&issuer=GitHub',

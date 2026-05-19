@@ -109,7 +109,7 @@
   "backupPasswordEnterHint": "Enter the password used when this backup was created.",
   "fieldPassword": "Password",
   "fieldPasswordConfirm": "Confirm password",
-  "fieldPasswordTooShort": "Use at least 6 characters",
+  "fieldPasswordTooShort": "Use at least 12 characters",
   "fieldPasswordMismatch": "The passwords do not match",
 
   "importConflictTitle": "Some accounts already exist",

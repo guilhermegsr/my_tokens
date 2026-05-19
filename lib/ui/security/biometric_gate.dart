@@ -57,7 +57,7 @@ class _BiometricGateState extends State<BiometricGate>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _authenticate());
+    WidgetsBinding.instance.addPostFrameCallback((_) => _coldStart());
   }
 
   @override
@@ -80,9 +80,11 @@ class _BiometricGateState extends State<BiometricGate>
       if (settings.lockTimeout == LockTimeout.immediately) {
         setState(() => _status = _GateStatus.locked);
       } else {
-        // Stay unlocked for now; the recents preview is already blocked by
-        // FLAG_SECURE. Whether we re-lock is decided on resume.
+        // Stay unlocked; recents is already blocked by FLAG_SECURE.
+        // Re-locking is decided on resume, or — if the app is killed while
+        // away — on the next cold start via the persisted timestamp.
         _backgroundedAt = DateTime.now();
+        settings.recordBackgrounded();
       }
     } else if (state == AppLifecycleState.resumed) {
       if (_status == _GateStatus.locked) {
@@ -96,6 +98,25 @@ class _BiometricGateState extends State<BiometricGate>
         }
       }
     }
+  }
+
+  /// First check on launch. If the user picked a grace period and the app
+  /// was backgrounded recently enough — even if it was then fully killed —
+  /// we honour that window instead of demanding auth again, matching the
+  /// behaviour of merely minimising the app.
+  Future<void> _coldStart() async {
+    final settings = context.read<SettingsStore>();
+    await settings.ensureLoaded();
+    if (settings.lockEnabled &&
+        settings.lockTimeout != LockTimeout.immediately) {
+      final last = settings.lastBackgroundedAt;
+      if (last != null &&
+          DateTime.now().difference(last) < settings.lockTimeout.duration) {
+        if (mounted) setState(() => _status = _GateStatus.unlocked);
+        return;
+      }
+    }
+    _authenticate();
   }
 
   Future<void> _authenticate() async {

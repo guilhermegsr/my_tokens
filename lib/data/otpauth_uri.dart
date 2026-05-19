@@ -33,13 +33,24 @@ class OtpAuthUri {
       label = parts.sublist(1).join(':').trim();
     }
 
+    final digits = int.tryParse(parsed.queryParameters['digits'] ?? '') ?? 6;
+    final period = int.tryParse(parsed.queryParameters['period'] ?? '') ?? 30;
+    // Reject before persisting: a crafted period/digits would otherwise
+    // crash or hang the app every time this account is rendered.
+    if (!isValidTotpDigits(digits)) {
+      throw FormatException('Unsupported "digits" value: $digits.');
+    }
+    if (!isValidTotpPeriod(period)) {
+      throw FormatException('Unsupported "period" value: $period.');
+    }
+
     return Account(
       id: id,
       issuer: issuer,
       label: label,
       secret: secret,
-      digits: int.tryParse(parsed.queryParameters['digits'] ?? '') ?? 6,
-      period: int.tryParse(parsed.queryParameters['period'] ?? '') ?? 30,
+      digits: digits,
+      period: period,
       algorithm: totpAlgorithmFromName(
         parsed.queryParameters['algorithm'] ?? 'SHA1',
       ),

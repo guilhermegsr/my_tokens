@@ -285,7 +285,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get fieldPasswordConfirm => 'Confirmar senha';
 
   @override
-  String get fieldPasswordTooShort => 'Use pelo menos 6 caracteres';
+  String get fieldPasswordTooShort => 'Use pelo menos 12 caracteres';
 
   @override
   String get fieldPasswordMismatch => 'As senhas não coincidem';

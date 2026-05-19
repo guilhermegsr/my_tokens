@@ -11,6 +11,7 @@ import 'backup/backup_flow.dart';
 import 'backup_drawer.dart';
 import 'edit_account/edit_account_page.dart';
 import 'settings/settings_page.dart';
+import 'settings/settings_store.dart';
 import 'widgets/app_notification.dart';
 import 'widgets/search_field.dart';
 import 'widgets/token_tile.dart';
@@ -27,7 +28,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   final _searchController = TextEditingController();
   final _searchFocusNode = FocusNode();
   bool _isSearching = false;
-  bool _tokensHidden = false;
   bool _clockSuspect = false;
   bool _clockWarningDismissed = false;
 
@@ -66,7 +66,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   }
 
   void _toggleTokensHidden() {
-    setState(() => _tokensHidden = !_tokensHidden);
+    final settings = context.read<SettingsStore>();
+    settings.setTokensHidden(!settings.tokensHidden);
   }
 
   void _cancelSearch() {
@@ -138,6 +139,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     final palette = AppPalette.of(context);
     final l10n = AppLocalizations.of(context);
     final store = context.watch<AccountStore>();
+    final tokensHidden = context.watch<SettingsStore>().tokensHidden;
 
     // Always alphabetical, case-insensitive so "github" and "GitHub" sort
     // together.
@@ -175,7 +177,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 controller: _searchController,
                 focusNode: _searchFocusNode,
                 isActive: _isSearching,
-                tokensHidden: _tokensHidden,
+                tokensHidden: tokensHidden,
                 onOpenMenu: () => _scaffoldKey.currentState?.openDrawer(),
                 onToggleHidden: _toggleTokensHidden,
                 onActivate: _activateSearch,
@@ -241,7 +243,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                                 account: account,
                                 code: totp.code,
                                 secondsRemaining: totp.secondsRemaining,
-                                hidden: _tokensHidden,
+                                hidden: tokensHidden,
                               ),
                             );
                           },

@@ -245,9 +245,19 @@ class BackupFlow {
                 obscureText: true,
                 autofocus: true,
                 decoration: InputDecoration(labelText: l10n.fieldPassword),
-                validator: (v) => (v == null || v.length < 6)
-                    ? l10n.fieldPasswordTooShort
-                    : null,
+                // The export file leaves the device, so its password is the
+                // only thing standing between it and offline brute force.
+                // Import only checks non-empty: rejecting a legacy short
+                // password would lock the user out of their own data.
+                validator: (v) {
+                  final value = v ?? '';
+                  if (isNewPassword) {
+                    return value.length < 12
+                        ? l10n.fieldPasswordTooShort
+                        : null;
+                  }
+                  return value.isEmpty ? l10n.fieldPasswordTooShort : null;
+                },
               ),
               if (isNewPassword) ...[
                 const SizedBox(height: 12),

@@ -581,7 +581,7 @@ abstract class AppLocalizations {
   /// No description provided for @fieldPasswordTooShort.
   ///
   /// In en, this message translates to:
-  /// **'Use at least 6 characters'**
+  /// **'Use at least 12 characters'**
   String get fieldPasswordTooShort;
 
   /// No description provided for @fieldPasswordMismatch.
