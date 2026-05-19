@@ -36,6 +36,10 @@ dependencies:
   # Optional biometric app lock
   local_auth: ^2.3.0
 
+  # Reads the build's own version name (no network, no permissions) so the
+  # displayed version can never drift from the release.
+  package_info_plus: ^8.1.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

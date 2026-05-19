@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../l10n/app_localizations.dart';
 import 'app_theme.dart';
@@ -12,7 +13,10 @@ class BackupDrawer extends StatelessWidget {
     required this.onSettings,
   });
 
-  static const _appVersion = '1.0';
+  /// Resolved once from the build's own metadata, not hardcoded — a
+  /// literal here silently went stale across releases.
+  static final Future<String> _appVersion =
+      PackageInfo.fromPlatform().then((i) => i.version);
 
   final VoidCallback onExport;
   final VoidCallback onImport;
@@ -74,9 +78,15 @@ class BackupDrawer extends StatelessWidget {
               Center(
                 child: Padding(
                   padding: const EdgeInsets.only(bottom: 24),
-                  child: Text(
-                    l10n.appVersionLabel(_appVersion),
-                    style: TextStyle(fontSize: 12, color: palette.subtitle),
+                  child: FutureBuilder<String>(
+                    future: _appVersion,
+                    builder: (context, snapshot) => Text(
+                      snapshot.hasData
+                          ? l10n.appVersionLabel(snapshot.data!)
+                          : '',
+                      style:
+                          TextStyle(fontSize: 12, color: palette.subtitle),
+                    ),
                   ),
                 ),
               ),
