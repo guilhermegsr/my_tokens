@@ -91,7 +91,7 @@
   "backupPasswordEnterHint": "Digite a senha usada quando este backup foi criado.",
   "fieldPassword": "Senha",
   "fieldPasswordConfirm": "Confirmar senha",
-  "fieldPasswordTooShort": "Use pelo menos 6 caracteres",
+  "fieldPasswordTooShort": "Use pelo menos 12 caracteres",
   "fieldPasswordMismatch": "As senhas não coincidem",
 
   "importConflictTitle": "Algumas contas já existem",

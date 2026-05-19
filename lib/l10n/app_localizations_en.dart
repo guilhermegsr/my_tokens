@@ -282,7 +282,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fieldPasswordConfirm => 'Confirm password';
 
   @override
-  String get fieldPasswordTooShort => 'Use at least 6 characters';
+  String get fieldPasswordTooShort => 'Use at least 12 characters';
 
   @override
   String get fieldPasswordMismatch => 'The passwords do not match';

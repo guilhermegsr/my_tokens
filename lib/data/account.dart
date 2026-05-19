@@ -13,16 +13,22 @@ class Account {
     this.algorithm = TotpAlgorithm.sha1,
   });
 
-  factory Account.fromJson(Map<String, dynamic> json) => Account(
-        id: json['id'] as String,
-        issuer: (json['issuer'] as String?) ?? '',
-        label: (json['label'] as String?) ?? '',
-        secret: json['secret'] as String,
-        digits: (json['digits'] as int?) ?? 6,
-        period: (json['period'] as int?) ?? 30,
-        algorithm:
-            totpAlgorithmFromName((json['algorithm'] as String?) ?? 'SHA1'),
-      );
+  factory Account.fromJson(Map<String, dynamic> json) {
+    final digits = (json['digits'] as int?) ?? 6;
+    final period = (json['period'] as int?) ?? 30;
+    return Account(
+      id: json['id'] as String,
+      issuer: (json['issuer'] as String?) ?? '',
+      label: (json['label'] as String?) ?? '',
+      secret: json['secret'] as String,
+      // Clamp rather than throw: one tampered/legacy record must not make
+      // the whole vault fail to load.
+      digits: isValidTotpDigits(digits) ? digits : 6,
+      period: isValidTotpPeriod(period) ? period : 30,
+      algorithm:
+          totpAlgorithmFromName((json['algorithm'] as String?) ?? 'SHA1'),
+    );
+  }
 
   final String id;
   final String issuer;

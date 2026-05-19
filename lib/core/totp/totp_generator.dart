@@ -2,6 +2,19 @@ import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
 
+/// Bounds enforced on untrusted otpauth params (scanned QR, imported
+/// backup): `period <= 0` divides by zero and a huge `digits` exhausts
+/// CPU/memory in `_pow10`/`padLeft`.
+const int kMinDigits = 6;
+const int kMaxDigits = 10;
+const int kMinPeriod = 1;
+const int kMaxPeriod = 600;
+
+bool isValidTotpDigits(int digits) =>
+    digits >= kMinDigits && digits <= kMaxDigits;
+bool isValidTotpPeriod(int period) =>
+    period >= kMinPeriod && period <= kMaxPeriod;
+
 /// Hash algorithms allowed by the otpauth Key Uri Format.
 enum TotpAlgorithm { sha1, sha256, sha512 }
 
@@ -53,18 +66,22 @@ class TotpGenerator {
     TotpAlgorithm algorithm = TotpAlgorithm.sha1,
     DateTime? at,
   }) {
+    // Last line of defence: a bad value slipping past parsing/storage must
+    // still never divide by zero or hang the UI here.
+    final safeDigits = isValidTotpDigits(digits) ? digits : 6;
+    final safePeriod = isValidTotpPeriod(period) ? period : 30;
     final now = at ?? DateTime.now();
     final unixSeconds = now.millisecondsSinceEpoch ~/ 1000;
-    final counter = unixSeconds ~/ period;
+    final counter = unixSeconds ~/ safePeriod;
     final code = _hotp(
       _decodeBase32(secretBase32),
       counter,
-      digits: digits,
+      digits: safeDigits,
       algorithm: algorithm,
     );
     return TotpCode(
       code: code,
-      secondsRemaining: period - (unixSeconds % period),
+      secondsRemaining: safePeriod - (unixSeconds % safePeriod),
     );
   }
 
