@@ -18,6 +18,12 @@ Argon2id backup encryption, and the app lock. Reports demonstrating
 secret disclosure, weakened cryptography, or app-lock bypass are in
 scope.
 
+The security model assumes a non-compromised device. Vault confidentiality
+rests on the Keystore-sealed key, and settings are integrity-protected so
+tampering fails closed. Attacks that presuppose root, a custom OS, or
+physical extraction of Keystore material are out of scope, as no
+app-level control can withstand them.
+
 ## Supported versions
 
 Only the latest released version receives security fixes.

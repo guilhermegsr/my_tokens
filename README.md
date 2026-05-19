@@ -25,42 +25,40 @@
 
 ---
 
-MyTokens generates TOTP verification codes (RFC 6238) for two-factor
-accounts. It has no internet permission: every secret stays encrypted
-on the device and nothing is ever transmitted.
+A two-factor authenticator that keeps your accounts entirely on your
+device. No cloud, no account, no internet permission — your secrets are
+encrypted locally and never leave the phone.
 
 ## Features
 
-- TOTP codes — SHA1/256/512, 6–8 digits, custom period
-- QR scan or manual entry, with duplicate rejection
-- Password-encrypted backup export / import
-- Biometric / device lock with configurable timeout
-- Out-of-sync clock detection
-- Light and dark themes
-- English and Portuguese, following the device locale
+- **Standards-compliant TOTP** — RFC 6238, SHA1/256/512, 6–8 digits,
+  custom periods
+- **Encrypted at rest** — AES-256-GCM vault with the key sealed in the
+  Android Keystore
+- **Portable, secure backups** — a single password-protected file you
+  control, hardened with Argon2id
+- **App lock** — biometric or device credential, with a configurable
+  grace period
+- **Reliability built in** — duplicate detection and out-of-sync clock
+  warnings so codes never fail silently
+- **Polished experience** — light/dark themes, English and Portuguese
 
 ## Security
 
-- No internet permission; no telemetry
-- Secrets in an AES-256-GCM vault; key held in the Android Keystore,
-  never written in cleartext
-- Backups encrypted with the user password via Argon2id
+- 100% offline — no internet permission, no telemetry, no backend
+- Secrets sealed in an AES-256-GCM vault; the key lives in the Android
+  Keystore and is never written in cleartext
+- Backups encrypted with the user's password via Argon2id
 - Screenshots and the app-switcher preview are blocked
+- Cloud and device-transfer backups of the vault are disabled
 
-## Install
+Vulnerability reporting is described in [SECURITY.md](SECURITY.md).
 
-Download the signed APK from the
-[latest release](https://github.com/guilhermegsr/my_tokens/releases/latest)
-and install it on your Android device. No Play Store account, build tooling,
-or developer setup required.
+## Download
 
-### Build from source (optional)
+Get the signed APK from the
+**[latest release](https://github.com/guilhermegsr/my_tokens/releases/latest)**.
+No store account or setup required.
 
-Only needed for development. Requires the Flutter SDK.
-
-```
-flutter pub get
-flutter build apk --release
-```
-
-Release signing and publishing are documented in [RELEASE.md](RELEASE.md).
+<sub>Building from source and release signing are documented in
+[RELEASE.md](RELEASE.md).</sub>
