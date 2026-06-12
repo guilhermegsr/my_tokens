@@ -7,12 +7,6 @@ import '../../l10n/app_localizations.dart';
 import '../app_theme.dart';
 import 'add_account_flow.dart';
 
-/// Reads an `otpauth://` QR with the camera and returns the parsed
-/// [Account] to the caller.
-///
-/// Visuals follow the Samsung scanner: no closed box, just four wide
-/// corner brackets. They animate inward on open, breathe gently while
-/// scanning (no sweeping line), and snap shut on a hit.
 class ScanPage extends StatefulWidget {
   const ScanPage({super.key});
 
@@ -101,7 +95,6 @@ class _ScanPageState extends State<ScanPage> with TickerProviderStateMixin {
       width: side,
       height: side,
     );
-    // The brackets start spread out and converge onto the resting frame.
     final openFrame = restingFrame.inflate(side * 0.22);
 
     return Scaffold(
@@ -183,7 +176,6 @@ class _ScanPageState extends State<ScanPage> with TickerProviderStateMixin {
 
   Rect _currentFrame(Rect resting, Rect open) {
     if (_detected != null) {
-      // Snap shut on a successful read.
       final t = Curves.easeInBack.transform(_lock.value).clamp(0.0, 1.0);
       return Rect.lerp(resting, resting.deflate(resting.width * 0.16), t)!;
     }
@@ -191,7 +183,6 @@ class _ScanPageState extends State<ScanPage> with TickerProviderStateMixin {
       final t = Curves.easeOutCubic.transform(_intro.value);
       return Rect.lerp(open, resting, t)!;
     }
-    // Subtle breathing while scanning — no moving line.
     final p = Curves.easeInOut.transform(_pulse.value);
     return resting.inflate(p * 7);
   }
@@ -205,7 +196,6 @@ class _ScanPageState extends State<ScanPage> with TickerProviderStateMixin {
   }
 }
 
-/// Draws only four wide rounded corner brackets (no enclosing box).
 class _CornerBracketsPainter extends CustomPainter {
   _CornerBracketsPainter({
     required this.frame,
@@ -219,8 +209,6 @@ class _CornerBracketsPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // A faint, uniform scrim keeps the brackets readable without boxing
-    // the camera in.
     canvas.drawRect(
       Offset.zero & size,
       Paint()..color = Colors.black.withValues(alpha: 0.18),

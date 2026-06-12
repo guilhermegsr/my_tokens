@@ -4,9 +4,6 @@ import '../app_theme.dart';
 
 enum NotificationKind { success, error, info }
 
-/// Themed, floating snackbars used everywhere instead of the bare Material
-/// default, so feedback matches the light/dark palette and reads at a
-/// glance (colored icon + tinted accent per outcome).
 class AppNotification {
   const AppNotification._();
 

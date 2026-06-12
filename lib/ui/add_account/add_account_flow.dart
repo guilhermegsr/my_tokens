@@ -13,8 +13,6 @@ import 'scan_page.dart';
 
 enum _EnrollmentMethod { scan, manual }
 
-/// Drives account enrollment: pick QR vs. manual entry, receive the
-/// resulting [Account] and persist it to the vault.
 class AddAccountFlow {
   const AddAccountFlow._();
 

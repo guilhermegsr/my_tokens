@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 
-/// MyTokens light and dark themes.
 class AppTheme {
   const AppTheme._();
 
-  static const _accent = Color(0xFF0176FD); // ring + FAB; matches the app logo blue
+  static const _accent = Color(0xFF0176FD);
 
   static ThemeData light() => _build(
         brightness: Brightness.light,

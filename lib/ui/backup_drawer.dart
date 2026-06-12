@@ -4,7 +4,6 @@ import 'package:package_info_plus/package_info_plus.dart';
 import '../l10n/app_localizations.dart';
 import 'app_theme.dart';
 
-/// App side menu: backup and settings entry points.
 class BackupDrawer extends StatelessWidget {
   const BackupDrawer({
     super.key,

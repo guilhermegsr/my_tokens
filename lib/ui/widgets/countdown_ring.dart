@@ -2,7 +2,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-/// Circular countdown with the remaining seconds in the center.
 class CountdownRing extends StatelessWidget {
   const CountdownRing({
     super.key,
@@ -58,7 +57,6 @@ class _RingPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round
       ..color = color;
 
-    // Drains clockwise from the top as the period elapses.
     canvas.drawArc(
       Rect.fromCircle(center: center, radius: radius),
       -math.pi / 2,
