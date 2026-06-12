@@ -12,12 +12,10 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
-  intl: any
+  intl: 0.20.2
 
-  # State management
   provider: ^6.1.2
 
-  # Crypto / TOTP
   crypto: ^3.0.5
   cryptography: ^2.7.0
   # Native AES-GCM / Argon2id on Android & iOS — the pure-Dart Argon2id
@@ -25,15 +23,12 @@ dependencies:
   cryptography_flutter: ^2.3.2
   flutter_secure_storage: ^9.2.2
 
-  # Account enrollment
   mobile_scanner: ^5.2.3
 
-  # Encrypted backup
   file_picker: ^8.1.2
   share_plus: ^10.1.1
   path_provider: ^2.1.4
 
-  # Optional biometric app lock
   local_auth: ^2.3.0
 
   # Reads the build's own version name (no network, no permissions) so the

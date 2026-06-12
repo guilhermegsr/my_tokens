@@ -9,13 +9,18 @@ plugins {
 }
 
 // Release signing is read from android/key.properties (kept out of source
-// control). When it's absent we fall back to debug signing so local
-// `flutter run` / CI still work without the upload keystore.
+// control). Release tasks fail closed when the upload keystore is absent.
 val keystorePropertiesFile = rootProject.file("key.properties")
 val keystoreProperties = Properties()
 val hasReleaseKeystore = keystorePropertiesFile.exists()
 if (hasReleaseKeystore) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+}
+val releaseTaskRequested = gradle.startParameter.taskNames.any {
+    it.contains("Release", ignoreCase = true)
+}
+check(hasReleaseKeystore || !releaseTaskRequested) {
+    "Release keystore missing. Configure android/key.properties."
 }
 
 android {
@@ -53,10 +58,8 @@ android {
 
     buildTypes {
         release {
-            signingConfig = if (hasReleaseKeystore) {
-                signingConfigs.getByName("release")
-            } else {
-                signingConfigs.getByName("debug")
+            if (hasReleaseKeystore) {
+                signingConfig = signingConfigs.getByName("release")
             }
         }
     }

@@ -5,8 +5,8 @@ Application ID `net.guilhermegomes.mytokens`. Version is set in
 
 ## Signing
 
-Release builds are signed when `android/key.properties` exists,
-otherwise the debug key is used (so `flutter run` keeps working).
+Release builds require `android/key.properties`; the build fails instead
+of falling back to the debug key. Debug builds still work without it.
 
 Generate the upload keystore once and back up the `.jks` and its
 passwords — losing them makes signed updates over an installed version
