@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:path_provider/path_provider.dart';
 
@@ -31,9 +32,19 @@ class AccountRepository {
     if (!await file.exists()) return [];
     final cipher = await _cipherInstance;
     final json = await cipher.decrypt(await file.readAsString());
-    return (jsonDecode(json) as List<dynamic>)
-        .map((e) => Account.fromJson(e as Map<String, dynamic>))
-        .toList();
+    final decoded = jsonDecode(json);
+    if (decoded is! List) throw const FormatException('Invalid vault.');
+    final accounts = <Account>[];
+    for (final entry in decoded) {
+      try {
+        if (entry is Map<String, dynamic>) {
+          accounts.add(Account.fromJson(entry));
+        }
+      } on FormatException {
+        // Invalid legacy/tampered entries are unusable and must not crash the app.
+      }
+    }
+    return accounts;
   }
 
   Future<void> save(List<Account> accounts) async {
@@ -42,8 +53,17 @@ class AccountRepository {
     final file = await _file;
     // Write-then-rename keeps the vault atomic: a crash mid-write can never
     // leave a half-written, undecryptable file.
-    final temp = File('${file.path}.tmp');
-    await temp.writeAsString(await cipher.encrypt(payload), flush: true);
-    await temp.rename(file.path);
+    final suffix =
+        '${DateTime.now().microsecondsSinceEpoch}-'
+        '${Random().nextInt(1 << 32)}';
+    final temp = File('${file.path}.$suffix.tmp');
+    try {
+      await temp.writeAsString(await cipher.encrypt(payload), flush: true);
+      await temp.rename(file.path);
+    } finally {
+      try {
+        if (await temp.exists()) await temp.delete();
+      } catch (_) {}
+    }
   }
 }

@@ -9,13 +9,60 @@ const int kMinDigits = 6;
 const int kMaxDigits = 10;
 const int kMinPeriod = 1;
 const int kMaxPeriod = 600;
+const int kMaxSecretLength = 256;
+
+final RegExp _base32SecretPattern = RegExp(r'^[A-Z2-7]+$');
 
 bool isValidTotpDigits(int digits) =>
     digits >= kMinDigits && digits <= kMaxDigits;
 bool isValidTotpPeriod(int period) =>
     period >= kMinPeriod && period <= kMaxPeriod;
 
-/// Hash algorithms allowed by the otpauth Key Uri Format.
+String normalizeTotpSecret(String secret) =>
+    secret.replaceAll(RegExp(r'[\s=]'), '').toUpperCase();
+
+String validateTotpSecret(String secret) {
+  final normalized = normalizeTotpSecret(secret);
+  if (normalized.isEmpty || normalized.length > kMaxSecretLength) {
+    throw const FormatException('Invalid secret length.');
+  }
+  if (!_base32SecretPattern.hasMatch(normalized)) {
+    throw const FormatException('Invalid base32 secret.');
+  }
+  _decodeBase32(normalized);
+  return normalized;
+}
+
+/// Decodes RFC 4648 base32. Whitespace, padding and case are tolerated
+/// because secrets pasted by users and embedded in QR codes vary wildly.
+Uint8List _decodeBase32(String input) {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  final normalized = normalizeTotpSecret(input);
+  if (normalized.isEmpty || normalized.length > kMaxSecretLength) {
+    throw const FormatException('Invalid secret length.');
+  }
+
+  var buffer = 0;
+  var bits = 0;
+  final output = <int>[];
+  for (final char in normalized.split('')) {
+    final value = alphabet.indexOf(char);
+    if (value < 0) {
+      throw FormatException('Invalid base32 character: "$char".');
+    }
+    buffer = (buffer << 5) | value;
+    bits += 5;
+    if (bits >= 8) {
+      bits -= 8;
+      output.add((buffer >> bits) & 0xff);
+    }
+  }
+  if (output.isEmpty) {
+    throw const FormatException('Invalid base32 secret.');
+  }
+  return Uint8List.fromList(output);
+}
+
 enum TotpAlgorithm { sha1, sha256, sha512 }
 
 TotpAlgorithm totpAlgorithmFromName(String name) {
@@ -41,8 +88,6 @@ String totpAlgorithmName(TotpAlgorithm algorithm) {
   }
 }
 
-/// A computed one-time password together with the number of seconds it
-/// stays valid, so callers can drive a countdown without re-deriving it.
 class TotpCode {
   const TotpCode({required this.code, required this.secondsRemaining});
 
@@ -57,8 +102,6 @@ class TotpCode {
 class TotpGenerator {
   const TotpGenerator();
 
-  /// [at] is injectable to make the time-dependent output testable; it
-  /// defaults to the current wall clock.
   TotpCode generate(
     String secretBase32, {
     int digits = 6,
@@ -111,7 +154,8 @@ class TotpGenerator {
     final digest = Hmac(hash, key).convert(message).bytes;
     // RFC 4226 dynamic truncation.
     final offset = digest[digest.length - 1] & 0x0f;
-    final binary = ((digest[offset] & 0x7f) << 24) |
+    final binary =
+        ((digest[offset] & 0x7f) << 24) |
         ((digest[offset + 1] & 0xff) << 16) |
         ((digest[offset + 2] & 0xff) << 8) |
         (digest[offset + 3] & 0xff);
@@ -125,32 +169,5 @@ class TotpGenerator {
       result *= 10;
     }
     return result;
-  }
-
-  /// Decodes RFC 4648 base32. Whitespace, padding and case are tolerated
-  /// because secrets pasted by users and embedded in QR codes vary wildly.
-  Uint8List _decodeBase32(String input) {
-    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-    final normalized = input.replaceAll(RegExp(r'[\s=]'), '').toUpperCase();
-    if (normalized.isEmpty) {
-      throw const FormatException('Empty secret.');
-    }
-
-    var buffer = 0;
-    var bits = 0;
-    final output = <int>[];
-    for (final char in normalized.split('')) {
-      final value = alphabet.indexOf(char);
-      if (value < 0) {
-        throw FormatException('Invalid base32 character: "$char".');
-      }
-      buffer = (buffer << 5) | value;
-      bits += 5;
-      if (bits >= 8) {
-        bits -= 8;
-        output.add((buffer >> bits) & 0xff);
-      }
-    }
-    return Uint8List.fromList(output);
   }
 }

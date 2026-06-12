@@ -1,7 +1,8 @@
 import '../core/totp/totp_generator.dart';
 
-/// A TOTP account. [secret] is the base32 shared secret; it only ever
-/// exists in memory and inside the encrypted vault, never as plaintext.
+const int kMaxAccountIdLength = 128;
+const int kMaxAccountTextLength = 256;
+
 class Account {
   Account({
     required this.id,
@@ -14,19 +15,21 @@ class Account {
   });
 
   factory Account.fromJson(Map<String, dynamic> json) {
-    final digits = (json['digits'] as int?) ?? 6;
-    final period = (json['period'] as int?) ?? 30;
+    final digits = _optionalInt(json, 'digits') ?? 6;
+    final period = _optionalInt(json, 'period') ?? 30;
+    final algorithm = _optionalString(json, 'algorithm');
     return Account(
-      id: json['id'] as String,
-      issuer: (json['issuer'] as String?) ?? '',
-      label: (json['label'] as String?) ?? '',
-      secret: json['secret'] as String,
+      id: _requiredString(json, 'id', kMaxAccountIdLength),
+      issuer: _optionalString(json, 'issuer'),
+      label: _optionalString(json, 'label'),
+      secret: validateTotpSecret(
+        _requiredString(json, 'secret', kMaxSecretLength * 2),
+      ),
       // Clamp rather than throw: one tampered/legacy record must not make
       // the whole vault fail to load.
       digits: isValidTotpDigits(digits) ? digits : 6,
       period: isValidTotpPeriod(period) ? period : 30,
-      algorithm:
-          totpAlgorithmFromName((json['algorithm'] as String?) ?? 'SHA1'),
+      algorithm: totpAlgorithmFromName(algorithm.isEmpty ? 'SHA1' : algorithm),
     );
   }
 
@@ -38,31 +41,58 @@ class Account {
   final int period;
   final TotpAlgorithm algorithm;
 
-  /// List header text, e.g. "Google : jane.doe@gmail.com".
   String get displayName => issuer.isEmpty ? label : '$issuer : $label';
 
   /// Stable cryptographic identity: two accounts with the same shared
   /// secret are the same account, regardless of id or label. Used to keep
   /// the same account from being added twice.
-  String get identity => secret.replaceAll(' ', '').toUpperCase();
+  String get identity => normalizeTotpSecret(secret);
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'issuer': issuer,
-        'label': label,
-        'secret': secret,
-        'digits': digits,
-        'period': period,
-        'algorithm': totpAlgorithmName(algorithm),
-      };
+    'id': id,
+    'issuer': issuer,
+    'label': label,
+    'secret': secret,
+    'digits': digits,
+    'period': period,
+    'algorithm': totpAlgorithmName(algorithm),
+  };
 
   Account copyWith({String? issuer, String? label, String? secret}) => Account(
-        id: id,
-        issuer: issuer ?? this.issuer,
-        label: label ?? this.label,
-        secret: secret ?? this.secret,
-        digits: digits,
-        period: period,
-        algorithm: algorithm,
-      );
+    id: id,
+    issuer: issuer ?? this.issuer,
+    label: label ?? this.label,
+    secret: secret == null ? this.secret : validateTotpSecret(secret),
+    digits: digits,
+    period: period,
+    algorithm: algorithm,
+  );
+
+  static String _requiredString(
+    Map<String, dynamic> json,
+    String key,
+    int maxLength,
+  ) {
+    final value = json[key];
+    if (value is! String || value.isEmpty || value.length > maxLength) {
+      throw FormatException('Invalid "$key".');
+    }
+    return value;
+  }
+
+  static String _optionalString(Map<String, dynamic> json, String key) {
+    final value = json[key];
+    if (value == null) return '';
+    if (value is! String || value.length > kMaxAccountTextLength) {
+      throw FormatException('Invalid "$key".');
+    }
+    return value;
+  }
+
+  static int? _optionalInt(Map<String, dynamic> json, String key) {
+    final value = json[key];
+    if (value == null) return null;
+    if (value is! int) throw FormatException('Invalid "$key".');
+    return value;
+  }
 }

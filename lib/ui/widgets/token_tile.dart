@@ -1,21 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 
+import '../../core/privacy/secure_clipboard.dart';
 import '../../data/account.dart';
 import '../account_store.dart';
 import '../app_theme.dart';
+import '../settings/settings_store.dart';
 import 'countdown_ring.dart';
 
 /// How long a copied code is allowed to live in the clipboard before it is
 /// wiped. Codes are short-lived secrets; leaving them in the clipboard
 /// indefinitely lets any other app read them long after they were needed.
-const _clipboardClearDelay = Duration(seconds: 30);
+const _clipboardClearDelay = Duration(seconds: 10);
 
-/// One row of the account list: account name, large code and countdown
-/// ring. Tap copies the code to the clipboard (auto-cleared shortly after).
-/// Since the global press ripple is disabled, the row provides its own
-/// press effect — a brief shrink + tinted background — so a tap visibly
-/// registers.
 class TokenTile extends StatefulWidget {
   const TokenTile({
     super.key,
@@ -29,8 +27,6 @@ class TokenTile extends StatefulWidget {
   final String code;
   final int secondsRemaining;
 
-  /// When true the digits are masked behind bullets; tapping still copies
-  /// the real code so "hidden" is a shoulder-surfing guard, not a lock.
   final bool hidden;
 
   @override
@@ -70,7 +66,7 @@ class _TokenTileState extends State<TokenTile> {
   Future<void> _handleTap() async {
     await HapticFeedback.selectionClick();
     final value = widget.code.replaceAll(' ', '');
-    await Clipboard.setData(ClipboardData(text: value));
+    await SecureClipboard.setText(value);
     _scheduleClipboardClear(value);
   }
 
@@ -81,7 +77,7 @@ class _TokenTileState extends State<TokenTile> {
     Future<void>.delayed(_clipboardClearDelay, () async {
       final current = await Clipboard.getData(Clipboard.kTextPlain);
       if (current?.text == value) {
-        await Clipboard.setData(const ClipboardData(text: ''));
+        await SecureClipboard.setText('');
       }
     });
   }
@@ -89,12 +85,13 @@ class _TokenTileState extends State<TokenTile> {
   @override
   Widget build(BuildContext context) {
     final palette = AppPalette.of(context);
+    final copyOnTapEnabled = context.watch<SettingsStore>().copyOnTapEnabled;
 
     return GestureDetector(
-      onTapDown: (_) => _press(),
-      onTapUp: (_) => _release(),
-      onTapCancel: _release,
-      onTap: _handleTap,
+      onTapDown: copyOnTapEnabled ? (_) => _press() : null,
+      onTapUp: copyOnTapEnabled ? (_) => _release() : null,
+      onTapCancel: copyOnTapEnabled ? _release : null,
+      onTap: copyOnTapEnabled ? _handleTap : null,
       child: AnimatedScale(
         scale: _pressed ? 0.97 : 1,
         duration: const Duration(milliseconds: 90),
@@ -115,8 +112,7 @@ class _TokenTileState extends State<TokenTile> {
                       widget.account.displayName,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style:
-                          TextStyle(fontSize: 13, color: palette.subtitle),
+                      style: TextStyle(fontSize: 13, color: palette.subtitle),
                     ),
                     const SizedBox(height: 4),
                     Text(

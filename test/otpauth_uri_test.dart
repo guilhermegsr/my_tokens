@@ -39,6 +39,21 @@ void main() {
     );
   });
 
+  test('rejects an invalid base32 secret before persistence', () {
+    expect(
+      () => OtpAuthUri.parse('otpauth://totp/Account?secret=!!!!', id: '8'),
+      throwsFormatException,
+    );
+  });
+
+  test('normalizes secret before persistence', () {
+    final account = OtpAuthUri.parse(
+      'otpauth://totp/Account?secret=jbsw%20y3dp%20ehpk%203pxp',
+      id: '9',
+    );
+    expect(account.secret, 'JBSWY3DPEHPK3PXP');
+  });
+
   test('rejects period=0 (would divide-by-zero on every render)', () {
     expect(
       () => OtpAuthUri.parse(
@@ -59,19 +74,20 @@ void main() {
     );
   });
 
-  test('generator never crashes on out-of-range params (last-resort guard)',
-      () {
-    const gen = TotpGenerator();
-    // period=0 must not throw IntegerDivisionByZeroException.
+  test(
+    'generator never crashes on out-of-range params (last-resort guard)',
+    () {
+      const gen = TotpGenerator();
     expect(
       () => gen.generate('JBSWY3DPEHPK3PXP', period: 0).code,
-      returnsNormally,
-    );
-    expect(
-      () => gen.generate('JBSWY3DPEHPK3PXP', digits: 1 << 30).code,
-      returnsNormally,
-    );
-  });
+        returnsNormally,
+      );
+      expect(
+        () => gen.generate('JBSWY3DPEHPK3PXP', digits: 1 << 30).code,
+        returnsNormally,
+      );
+    },
+  );
 
   test('build and parse round-trip', () {
     final original = OtpAuthUri.parse(

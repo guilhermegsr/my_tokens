@@ -135,6 +135,20 @@ class AppLocalizationsPt extends AppLocalizations {
       'Exigir biometria ou desbloqueio do aparelho para abrir o MyTokens';
 
   @override
+  String get settingsScreenCapture => 'Capturas e compartilhamento';
+
+  @override
+  String get settingsScreenCaptureSubtitle =>
+      'Permite prints, gravações e chamadas com tela compartilhada. Use apenas com códigos seguros ou fictícios.';
+
+  @override
+  String get settingsCopyOnTap => 'Copiar códigos ao tocar';
+
+  @override
+  String get settingsCopyOnTapSubtitle =>
+      'Copia OTPs para a área de transferência do sistema. Desative para manter os códigos no MyTokens.';
+
+  @override
   String get settingsAutoLock => 'Bloquear ao sair do app';
 
   @override
@@ -285,7 +299,11 @@ class AppLocalizationsPt extends AppLocalizations {
   String get fieldPasswordConfirm => 'Confirmar senha';
 
   @override
-  String get fieldPasswordTooShort => 'Use pelo menos 12 caracteres';
+  String get fieldPasswordRequired => 'Digite a senha do backup';
+
+  @override
+  String get fieldPasswordTooShort =>
+      'Use pelo menos 16 caracteres e evite padrões comuns';
 
   @override
   String get fieldPasswordMismatch => 'As senhas não coincidem';
