@@ -114,24 +114,33 @@ class BackupFlow {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
 
-    final picked = await BiometricGate.withoutAutoLock(
-      () => FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['mytokens'],
-        withData: false,
-      ),
-    );
+    final FilePickerResult? picked;
+    try {
+      picked = await BiometricGate.withoutAutoLock(
+        () => FilePicker.platform.pickFiles(
+          type: FileType.any,
+          withData: true,
+        ),
+      );
+    } catch (_) {
+      AppNotification.showWith(
+        messenger,
+        theme,
+        l10n.backupFailed,
+        kind: NotificationKind.error,
+      );
+      return;
+    }
     if (picked == null || picked.files.isEmpty || !context.mounted) return;
 
     final Map<String, dynamic> header;
     try {
-      final path = picked.files.single.path;
-      if (path == null) throw const FormatException('Missing path.');
-      final file = File(path);
-      if (await file.length() > _maxBackupBytes) {
-        throw const FormatException('Backup too large.');
-      }
-      final bytes = await file.readAsBytes();
+      final platformFile = picked.files.single;
+      final bytes = platformFile.bytes ??
+          (platformFile.path != null
+              ? await File(platformFile.path!).readAsBytes()
+              : null);
+      if (bytes == null) throw const FormatException('Missing file data.');
       if (bytes.length > _maxBackupBytes) {
         throw const FormatException('Backup too large.');
       }
