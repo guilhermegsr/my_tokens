@@ -3,10 +3,9 @@ import 'package:provider/provider.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../app_theme.dart';
+import '../security/biometric_gate.dart';
 import 'settings_store.dart';
 
-/// App preferences: turn the lock off, choose the lock grace period, and
-/// pick the theme. Reached from the side menu.
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
 
@@ -28,7 +27,27 @@ class SettingsPage extends StatelessWidget {
                 title: l10n.settingsAppLock,
                 subtitle: l10n.settingsAppLockSubtitle,
                 value: settings.lockEnabled,
-                onChanged: settings.setLockEnabled,
+                onChanged: (value) {
+                  _setLockEnabled(context, value);
+                },
+              ),
+              _SwitchRow(
+                icon: Icons.screen_share_outlined,
+                title: l10n.settingsScreenCapture,
+                subtitle: l10n.settingsScreenCaptureSubtitle,
+                value: settings.screenCaptureAllowed,
+                onChanged: (value) {
+                  _setScreenCaptureAllowed(context, value);
+                },
+              ),
+              _SwitchRow(
+                icon: Icons.content_copy_outlined,
+                title: l10n.settingsCopyOnTap,
+                subtitle: l10n.settingsCopyOnTapSubtitle,
+                value: settings.copyOnTapEnabled,
+                onChanged: (value) {
+                  _setCopyOnTapEnabled(context, value);
+                },
               ),
             ],
           ),
@@ -89,10 +108,32 @@ class SettingsPage extends StatelessWidget {
         return l10n.settingsLockAfter5m;
     }
   }
+
+  static Future<void> _setLockEnabled(BuildContext context, bool value) async {
+    if (!value && !await BiometricGate.requireDeviceAuth(context)) return;
+    if (!context.mounted) return;
+    await context.read<SettingsStore>().setLockEnabled(value);
+  }
+
+  static Future<void> _setScreenCaptureAllowed(
+    BuildContext context,
+    bool value,
+  ) async {
+    if (value && !await BiometricGate.requireDeviceAuth(context)) return;
+    if (!context.mounted) return;
+    await context.read<SettingsStore>().setScreenCaptureAllowed(value);
+  }
+
+  static Future<void> _setCopyOnTapEnabled(
+    BuildContext context,
+    bool value,
+  ) async {
+    if (value && !await BiometricGate.requireDeviceAuth(context)) return;
+    if (!context.mounted) return;
+    await context.read<SettingsStore>().setCopyOnTapEnabled(value);
+  }
 }
 
-/// A titled, rounded card grouping related rows — the visual language used
-/// by the rest of the app (edit account, drawer).
 class _Section extends StatelessWidget {
   const _Section({required this.title, required this.children});
 

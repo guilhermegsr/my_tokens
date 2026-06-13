@@ -28,7 +28,6 @@ void main() {
     ]);
     final envelope = await Cipher(exportKey).encrypt(payload);
 
-    // Simulate import: derive again from the same password + salt.
     final importKey =
         await PasswordKeyDeriver.derive(password: password, salt: salt);
     final clear = await Cipher(importKey).decrypt(envelope);

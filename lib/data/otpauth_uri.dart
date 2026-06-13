@@ -1,10 +1,7 @@
 import '../core/totp/totp_generator.dart';
 import 'account.dart';
 
-/// Parses and builds `otpauth://totp/...` URIs (the Google Authenticator
-/// Key Uri Format) — this is what TOTP QR codes encode.
 class OtpAuthUri {
-  /// Throws [FormatException] if [uri] is not a valid TOTP otpauth URI.
   static Account parse(String uri, {required String id}) {
     final parsed = Uri.parse(uri.trim());
 
@@ -19,6 +16,7 @@ class OtpAuthUri {
     if (secret == null || secret.isEmpty) {
       throw const FormatException('Missing "secret" parameter.');
     }
+    final normalizedSecret = validateTotpSecret(secret);
 
     // The label path is "Issuer:account" or just "account"; the explicit
     // issuer query parameter wins when both are present.
@@ -31,6 +29,10 @@ class OtpAuthUri {
       final parts = rawLabel.split(':');
       if (issuer.isEmpty) issuer = parts.first.trim();
       label = parts.sublist(1).join(':').trim();
+    }
+    if (issuer.length > kMaxAccountTextLength ||
+        label.length > kMaxAccountTextLength) {
+      throw const FormatException('Account label too long.');
     }
 
     final digits = int.tryParse(parsed.queryParameters['digits'] ?? '') ?? 6;
@@ -48,7 +50,7 @@ class OtpAuthUri {
       id: id,
       issuer: issuer,
       label: label,
-      secret: secret,
+      secret: normalizedSecret,
       digits: digits,
       period: period,
       algorithm: totpAlgorithmFromName(

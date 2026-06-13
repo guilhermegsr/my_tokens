@@ -6,9 +6,6 @@ import '../core/totp/totp_generator.dart';
 import '../data/account.dart';
 import '../data/account_repository.dart';
 
-/// Application state: keeps accounts in memory, persists mutations to the
-/// encrypted vault, and ticks once per second so the UI can refresh codes
-/// and countdown rings.
 class AccountStore extends ChangeNotifier {
   AccountStore(this._repository) {
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
@@ -23,6 +20,7 @@ class AccountStore extends ChangeNotifier {
   List<Account> _accounts = [];
   String _searchQuery = '';
   bool _isLoading = true;
+  Future<void> _saveQueue = Future.value();
 
   bool get isLoading => _isLoading;
   String get searchQuery => _searchQuery;
@@ -32,9 +30,11 @@ class AccountStore extends ChangeNotifier {
     if (_searchQuery.isEmpty) return List.unmodifiable(_accounts);
     final query = _searchQuery.toLowerCase();
     return _accounts
-        .where((a) =>
-            a.issuer.toLowerCase().contains(query) ||
-            a.label.toLowerCase().contains(query))
+        .where(
+          (a) =>
+              a.issuer.toLowerCase().contains(query) ||
+              a.label.toLowerCase().contains(query),
+        )
         .toList(growable: false);
   }
 
@@ -53,11 +53,11 @@ class AccountStore extends ChangeNotifier {
   }
 
   TotpCode codeFor(Account account) => _totp.generate(
-        account.secret,
-        digits: account.digits,
-        period: account.period,
-        algorithm: account.algorithm,
-      );
+    account.secret,
+    digits: account.digits,
+    period: account.period,
+    algorithm: account.algorithm,
+  );
 
   /// Adds [account] unless one with the same secret already exists.
   /// Returns false when it's a duplicate (nothing is changed).
@@ -65,28 +65,35 @@ class AccountStore extends ChangeNotifier {
     if (_accounts.any((a) => a.identity == account.identity)) return false;
     _accounts = [..._accounts, account];
     notifyListeners();
-    await _repository.save(_accounts);
+    await _saveAccounts(_accounts);
     return true;
   }
 
   Future<void> remove(Account account) async {
     _accounts = _accounts.where((a) => a.id != account.id).toList();
     notifyListeners();
-    await _repository.save(_accounts);
+    await _saveAccounts(_accounts);
   }
 
   Future<void> update(Account account) async {
-    _accounts = [
-      for (final a in _accounts) a.id == account.id ? account : a,
-    ];
+    _accounts = [for (final a in _accounts) a.id == account.id ? account : a];
     notifyListeners();
-    await _repository.save(_accounts);
+    await _saveAccounts(_accounts);
   }
 
   Future<void> replaceAll(List<Account> accounts) async {
-    _accounts = accounts;
+    _accounts = List<Account>.from(accounts);
     notifyListeners();
-    await _repository.save(_accounts);
+    await _saveAccounts(_accounts);
+  }
+
+  Future<void> _saveAccounts(List<Account> accounts) {
+    final snapshot = List<Account>.from(accounts);
+    _saveQueue = _saveQueue.then(
+      (_) => _repository.save(snapshot),
+      onError: (_) => _repository.save(snapshot),
+    );
+    return _saveQueue;
   }
 
   @override

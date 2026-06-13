@@ -2,7 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
-import 'package:cryptography/cryptography.dart' show SecretBoxAuthenticationError;
+import 'package:cryptography/cryptography.dart'
+    show SecretBoxAuthenticationError;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
@@ -30,6 +31,8 @@ class BackupFlow {
   static const _magic = 'MyTokens';
   static const _version = 1;
   static const _saltLength = 16;
+  static const _maxBackupBytes = 1024 * 1024;
+  static const _maxBackupAccounts = 500;
 
   static Future<void> export(BuildContext context) async {
     final store = context.read<AccountStore>();
@@ -38,50 +41,71 @@ class BackupFlow {
     final l10n = AppLocalizations.of(context);
 
     if (store.accounts.isEmpty) {
-      AppNotification.showWith(messenger, theme, l10n.backupNoAccounts,
-          kind: NotificationKind.info);
+      AppNotification.showWith(
+        messenger,
+        theme,
+        l10n.backupNoAccounts,
+        kind: NotificationKind.info,
+      );
       return;
     }
 
     final password = await _promptPassword(context, isNewPassword: true);
     if (password == null || !context.mounted) return;
-
-    final accountsJson =
-        jsonEncode(store.accounts.map((a) => a.toJson()).toList());
-
-    // Key derivation (Argon2id) is the slow step; keep the user informed
-    // instead of leaving the screen frozen.
-    final String filePath;
-    try {
-      filePath = await _withProgress(context, l10n.backupWorking, () async {
-        final salt = _secureRandomBytes(_saltLength);
-        final key =
-            await PasswordKeyDeriver.derive(password: password, salt: salt);
-        final envelope = await Cipher(key).encrypt(accountsJson);
-        final file = File(
-          '${(await getTemporaryDirectory()).path}/mytokens-backup.mytokens',
-        );
-        await file.writeAsString(jsonEncode({
-          'app': _magic,
-          'version': _version,
-          'kdf': 'argon2id',
-          'salt': base64Encode(salt),
-          'payload': envelope,
-        }));
-        return file.path;
-      });
-    } catch (_) {
-      AppNotification.showWith(messenger, theme, l10n.backupFailed,
-          kind: NotificationKind.error);
+    if (!await BiometricGate.requireDeviceAuth(context) || !context.mounted) {
       return;
     }
 
-    await BiometricGate.withoutAutoLock(
-      () => Share.shareXFiles(
-        [XFile(filePath)],
-        subject: l10n.backupShareSubject,
-      ),
+    final accountsJson = jsonEncode(
+      store.accounts.map((a) => a.toJson()).toList(),
     );
+
+    String? filePath;
+    try {
+      filePath = await _withProgress(context, l10n.backupWorking, () async {
+        final salt = _secureRandomBytes(_saltLength);
+        final key = await PasswordKeyDeriver.derive(
+          password: password,
+          salt: salt,
+        );
+        final envelope = await Cipher(key).encrypt(accountsJson);
+        final suffix = DateTime.now().microsecondsSinceEpoch;
+        final file = File(
+          '${(await getTemporaryDirectory()).path}/mytokens-backup-$suffix.mytokens',
+        );
+        await file.writeAsString(
+          jsonEncode({
+            'app': _magic,
+            'version': _version,
+            'kdf': 'argon2id',
+            'salt': base64Encode(salt),
+            'payload': envelope,
+          }),
+        );
+        return file.path;
+      });
+
+      if (!context.mounted) return;
+      await BiometricGate.withoutAutoLock(
+        () => Share.shareXFiles([
+          XFile(filePath!),
+        ], subject: l10n.backupShareSubject),
+      );
+    } catch (_) {
+      AppNotification.showWith(
+        messenger,
+        theme,
+        l10n.backupFailed,
+        kind: NotificationKind.error,
+      );
+      return;
+    } finally {
+      if (filePath != null) {
+        try {
+          await File(filePath).delete();
+        } catch (_) {}
+      }
+    }
   }
 
   static Future<void> import(BuildContext context) async {
@@ -91,25 +115,62 @@ class BackupFlow {
     final l10n = AppLocalizations.of(context);
 
     final picked = await BiometricGate.withoutAutoLock(
-      () => FilePicker.platform.pickFiles(withData: true),
+      () => FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['mytokens'],
+        withData: false,
+      ),
     );
     if (picked == null || picked.files.isEmpty || !context.mounted) return;
 
-    // Parse the (unencrypted) header first so we can reject obviously
-    // wrong files before asking for a password.
     final Map<String, dynamic> header;
     try {
-      final file = picked.files.single;
-      final bytes = file.bytes ?? await File(file.path!).readAsBytes();
-      header = jsonDecode(utf8.decode(bytes)) as Map<String, dynamic>;
+      final path = picked.files.single.path;
+      if (path == null) throw const FormatException('Missing path.');
+      final file = File(path);
+      if (await file.length() > _maxBackupBytes) {
+        throw const FormatException('Backup too large.');
+      }
+      final bytes = await file.readAsBytes();
+      if (bytes.length > _maxBackupBytes) {
+        throw const FormatException('Backup too large.');
+      }
+      final decoded = jsonDecode(utf8.decode(bytes));
+      if (decoded is! Map<String, dynamic>) {
+        throw const FormatException('Invalid backup header.');
+      }
+      header = decoded;
     } catch (_) {
-      AppNotification.showWith(messenger, theme, l10n.backupCorrupted,
-          kind: NotificationKind.error);
+      AppNotification.showWith(
+        messenger,
+        theme,
+        l10n.backupCorrupted,
+        kind: NotificationKind.error,
+      );
       return;
     }
-    if (header['app'] != _magic || header['salt'] is! String) {
-      AppNotification.showWith(messenger, theme, l10n.backupNotMyTokens,
-          kind: NotificationKind.error);
+    if (header['app'] != _magic) {
+      AppNotification.showWith(
+        messenger,
+        theme,
+        l10n.backupNotMyTokens,
+        kind: NotificationKind.error,
+      );
+      return;
+    }
+
+    final List<int> salt;
+    final String payload;
+    try {
+      salt = _readSalt(header);
+      payload = _readPayload(header);
+    } catch (_) {
+      AppNotification.showWith(
+        messenger,
+        theme,
+        l10n.backupCorrupted,
+        kind: NotificationKind.error,
+      );
       return;
     }
 
@@ -122,26 +183,39 @@ class BackupFlow {
       imported = await _withProgress(context, l10n.backupWorking, () async {
         final key = await PasswordKeyDeriver.derive(
           password: password,
-          salt: base64Decode(header['salt'] as String),
+          salt: salt,
         );
-        final clear = await Cipher(key).decrypt(header['payload'] as String);
-        return (jsonDecode(clear) as List<dynamic>)
-            .map((e) => Account.fromJson(e as Map<String, dynamic>))
-            .toList();
+        final clear = await Cipher(key).decrypt(payload);
+        if (clear.length > _maxBackupBytes) {
+          throw const FormatException('Backup payload too large.');
+        }
+        return _readAccounts(clear);
       });
     } on SecretBoxAuthenticationError {
       // The MAC didn't verify: the derived key is wrong, i.e. the wrong
       // password (or a tampered file).
-      AppNotification.showWith(messenger, theme, l10n.backupWrongPassword,
-          kind: NotificationKind.error);
+      AppNotification.showWith(
+        messenger,
+        theme,
+        l10n.backupWrongPassword,
+        kind: NotificationKind.error,
+      );
       return;
     } on FormatException {
-      AppNotification.showWith(messenger, theme, l10n.backupCorrupted,
-          kind: NotificationKind.error);
+      AppNotification.showWith(
+        messenger,
+        theme,
+        l10n.backupCorrupted,
+        kind: NotificationKind.error,
+      );
       return;
     } catch (_) {
-      AppNotification.showWith(messenger, theme, l10n.backupFailed,
-          kind: NotificationKind.error);
+      AppNotification.showWith(
+        messenger,
+        theme,
+        l10n.backupFailed,
+        kind: NotificationKind.error,
+      );
       return;
     }
 
@@ -149,9 +223,7 @@ class BackupFlow {
     // credential), not by its locally-generated id, so a backup taken on
     // another device still reconciles correctly. We only interrupt the
     // user with a question when there is a genuine conflict to resolve.
-    final currentBySecret = {
-      for (final a in store.accounts) a.identity: a,
-    };
+    final currentBySecret = {for (final a in store.accounts) a.identity: a};
     final fresh = <Account>[];
     final conflicts = <Account>[];
     for (final incoming in imported) {
@@ -215,6 +287,71 @@ class BackupFlow {
     return List<int>.generate(length, (_) => random.nextInt(256));
   }
 
+  static List<int> _readSalt(Map<String, dynamic> header) {
+    _validateHeaderFormat(header);
+    final rawSalt = header['salt'];
+    if (rawSalt is! String || rawSalt.length > 128) {
+      throw const FormatException('Invalid salt.');
+    }
+    final salt = base64Decode(rawSalt);
+    if (salt.length != _saltLength) {
+      throw const FormatException('Invalid salt.');
+    }
+    return salt;
+  }
+
+  static String _readPayload(Map<String, dynamic> header) {
+    final payload = header['payload'];
+    if (payload is! String ||
+        payload.isEmpty ||
+        payload.length > _maxBackupBytes) {
+      throw const FormatException('Invalid payload.');
+    }
+    return payload;
+  }
+
+  static void _validateHeaderFormat(Map<String, dynamic> header) {
+    if (header['version'] != _version || header['kdf'] != 'argon2id') {
+      throw const FormatException('Unsupported backup format.');
+    }
+  }
+
+  static List<Account> _readAccounts(String clear) {
+    final decoded = jsonDecode(clear);
+    if (decoded is! List || decoded.length > _maxBackupAccounts) {
+      throw const FormatException('Invalid account list.');
+    }
+    return [for (final entry in decoded) Account.fromJson(_jsonMap(entry))];
+  }
+
+  static Map<String, dynamic> _jsonMap(Object? value) {
+    if (value is Map<String, dynamic>) return value;
+    throw const FormatException('Invalid account.');
+  }
+
+  static bool _isWeakBackupPassword(String value) {
+    final compact = value.toLowerCase().replaceAll(RegExp(r'\s+'), '');
+    if (value.length < 16) return true;
+    if (value.runes.toSet().length < 4) return true;
+    if (RegExp(r'^(.)\1+$').hasMatch(value)) return true;
+    const common = [
+      'password',
+      'passw0rd',
+      'qwerty',
+      'letmein',
+      'admin',
+      'senha',
+    ];
+    if (common.any(compact.contains)) return true;
+    if ('abcdefghijklmnopqrstuvwxyz'.contains(compact) ||
+        'zyxwvutsrqponmlkjihgfedcba'.contains(compact) ||
+        '01234567890123456789'.contains(compact) ||
+        '98765432109876543210'.contains(compact)) {
+      return true;
+    }
+    return false;
+  }
+
   static Future<String?> _promptPassword(
     BuildContext context, {
     required bool isNewPassword,
@@ -252,11 +389,11 @@ class BackupFlow {
                 validator: (v) {
                   final value = v ?? '';
                   if (isNewPassword) {
-                    return value.length < 12
+                    return _isWeakBackupPassword(value)
                         ? l10n.fieldPasswordTooShort
                         : null;
                   }
-                  return value.isEmpty ? l10n.fieldPasswordTooShort : null;
+                  return value.isEmpty ? l10n.fieldPasswordRequired : null;
                 },
               ),
               if (isNewPassword) ...[
@@ -311,17 +448,13 @@ class BackupFlow {
             child: Text(l10n.actionCancel),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(
-              context,
-              _ImportConflictChoice.keepExisting,
-            ),
+            onPressed: () =>
+                Navigator.pop(context, _ImportConflictChoice.keepExisting),
             child: Text(l10n.importKeepExisting),
           ),
           FilledButton(
-            onPressed: () => Navigator.pop(
-              context,
-              _ImportConflictChoice.replaceWithBackup,
-            ),
+            onPressed: () =>
+                Navigator.pop(context, _ImportConflictChoice.replaceWithBackup),
             child: Text(l10n.importReplaceWithBackup),
           ),
         ],

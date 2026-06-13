@@ -369,8 +369,6 @@ class _ClockWarningBanner extends StatelessWidget {
   }
 }
 
-/// The colored wipe shown behind a tile while swiping: accent + pencil for
-/// edit (swipe right), danger + trash for delete (swipe left).
 class _SwipeActionBackground extends StatelessWidget {
   const _SwipeActionBackground({
     required this.alignment,

@@ -19,7 +19,8 @@ enum LockTimeout {
   final Duration duration;
 }
 
-/// User preferences: app-lock on/off, lock grace period, theme, etc.
+/// User preferences: app-lock on/off, lock grace period, screen capture,
+/// theme, etc.
 ///
 /// The lock state is a security control, so this lives in the OS-backed
 /// secure store (Android `EncryptedSharedPreferences`, key in the Keystore),
@@ -28,10 +29,11 @@ enum LockTimeout {
 /// (lock enabled) — fail-secure.
 class SettingsStore extends ChangeNotifier {
   SettingsStore({FlutterSecureStorage? storage})
-      : _storage = storage ??
-            const FlutterSecureStorage(
-              aOptions: AndroidOptions(encryptedSharedPreferences: true),
-            );
+    : _storage =
+          storage ??
+          const FlutterSecureStorage(
+            aOptions: AndroidOptions(encryptedSharedPreferences: true),
+          );
 
   /// Single JSON blob; one key keeps reads/writes atomic.
   static const _storageKey = 'mytokens_settings_v1';
@@ -43,13 +45,17 @@ class SettingsStore extends ChangeNotifier {
 
   bool _lockEnabled = true;
   LockTimeout _lockTimeout = LockTimeout.immediately;
+  bool _screenCaptureAllowed = false;
   ThemeMode _themeMode = ThemeMode.system;
   bool _tokensHidden = false;
+  bool _copyOnTapEnabled = true;
   DateTime? _lastBackgroundedAt;
 
   bool get lockEnabled => _lockEnabled;
   LockTimeout get lockTimeout => _lockTimeout;
+  bool get screenCaptureAllowed => _screenCaptureAllowed;
   ThemeMode get themeMode => _themeMode;
+  bool get copyOnTapEnabled => _copyOnTapEnabled;
 
   /// Whether the codes are masked on the home list. Remembered across
   /// restarts so a user who hides their codes does not see them re-exposed
@@ -87,11 +93,14 @@ class SettingsStore extends ChangeNotifier {
       (t) => t.name == json['lockTimeout'],
       orElse: () => _lockTimeout,
     );
+    _screenCaptureAllowed =
+        json['screenCaptureAllowed'] as bool? ?? _screenCaptureAllowed;
     _themeMode = ThemeMode.values.firstWhere(
       (m) => m.name == json['themeMode'],
       orElse: () => _themeMode,
     );
     _tokensHidden = json['tokensHidden'] as bool? ?? _tokensHidden;
+    _copyOnTapEnabled = json['copyOnTapEnabled'] as bool? ?? _copyOnTapEnabled;
     final lastBg = json['lastBackgroundedAt'] as int?;
     if (lastBg != null) {
       _lastBackgroundedAt = DateTime.fromMillisecondsSinceEpoch(lastBg);
@@ -129,6 +138,13 @@ class SettingsStore extends ChangeNotifier {
     await _persist();
   }
 
+  Future<void> setScreenCaptureAllowed(bool value) async {
+    if (_screenCaptureAllowed == value) return;
+    _screenCaptureAllowed = value;
+    notifyListeners();
+    await _persist();
+  }
+
   Future<void> setThemeMode(ThemeMode value) async {
     if (_themeMode == value) return;
     _themeMode = value;
@@ -139,6 +155,13 @@ class SettingsStore extends ChangeNotifier {
   Future<void> setTokensHidden(bool value) async {
     if (_tokensHidden == value) return;
     _tokensHidden = value;
+    notifyListeners();
+    await _persist();
+  }
+
+  Future<void> setCopyOnTapEnabled(bool value) async {
+    if (_copyOnTapEnabled == value) return;
+    _copyOnTapEnabled = value;
     notifyListeners();
     await _persist();
   }
@@ -158,8 +181,10 @@ class SettingsStore extends ChangeNotifier {
         value: jsonEncode({
           'lockEnabled': _lockEnabled,
           'lockTimeout': _lockTimeout.name,
+          'screenCaptureAllowed': _screenCaptureAllowed,
           'themeMode': _themeMode.name,
           'tokensHidden': _tokensHidden,
+          'copyOnTapEnabled': _copyOnTapEnabled,
           'lastBackgroundedAt': _lastBackgroundedAt?.millisecondsSinceEpoch,
         }),
       );

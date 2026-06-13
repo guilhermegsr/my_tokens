@@ -6,8 +6,6 @@ import '../../l10n/app_localizations.dart';
 import '../app_theme.dart';
 import 'add_account_flow.dart';
 
-/// Manual enrollment form: issuer, account, secret and advanced options.
-/// The base32 secret is validated before an [Account] is returned.
 class ManualEntryPage extends StatefulWidget {
   const ManualEntryPage({super.key});
 
@@ -41,7 +39,7 @@ class _ManualEntryPageState extends State<ManualEntryPage> {
         id: AddAccountFlow.newAccountId(),
         issuer: _issuerController.text.trim(),
         label: _labelController.text.trim(),
-        secret: _secretController.text.replaceAll(' ', '').toUpperCase(),
+        secret: validateTotpSecret(_secretController.text),
         digits: _digits,
         period: _period,
         algorithm: _algorithm,
@@ -54,8 +52,7 @@ class _ManualEntryPageState extends State<ManualEntryPage> {
     final secret = (value ?? '').trim();
     if (secret.isEmpty) return l10n.fieldSecretRequired;
     try {
-      // Round-trip through the generator: cheapest correct base32 check.
-      const TotpGenerator().generate(secret);
+      validateTotpSecret(secret);
       return null;
     } on FormatException {
       return l10n.fieldSecretInvalid;
@@ -184,8 +181,6 @@ class _ManualEntryPageState extends State<ManualEntryPage> {
   }
 }
 
-/// Tappable disclosure header that expands the advanced TOTP parameters,
-/// which most users never need to touch.
 class _AdvancedHeader extends StatelessWidget {
   const _AdvancedHeader({
     required this.label,

@@ -4,10 +4,6 @@ import '../../data/account.dart';
 import '../../l10n/app_localizations.dart';
 import '../app_theme.dart';
 
-/// Edits the human-readable identity of an account (service / account
-/// name). The secret and TOTP parameters are intentionally left
-/// untouched. Returns the updated [Account] via [Navigator.pop], or
-/// nothing if the user backs out.
 class EditAccountPage extends StatefulWidget {
   const EditAccountPage({super.key, required this.account});
 

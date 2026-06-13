@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import '../../l10n/app_localizations.dart';
 import '../app_theme.dart';
 
-/// Search pill: menu icon + hint at rest; a text field with clear and
-/// cancel once active.
 class SearchField extends StatelessWidget {
   const SearchField({
     super.key,

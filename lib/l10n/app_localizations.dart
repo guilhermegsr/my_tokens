@@ -314,6 +314,30 @@ abstract class AppLocalizations {
   /// **'Require biometrics or device unlock to open MyTokens'**
   String get settingsAppLockSubtitle;
 
+  /// No description provided for @settingsScreenCapture.
+  ///
+  /// In en, this message translates to:
+  /// **'Screen capture and sharing'**
+  String get settingsScreenCapture;
+
+  /// No description provided for @settingsScreenCaptureSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Allows screenshots, recordings, and screen sharing. Use only with safe or demo codes.'**
+  String get settingsScreenCaptureSubtitle;
+
+  /// No description provided for @settingsCopyOnTap.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy codes on tap'**
+  String get settingsCopyOnTap;
+
+  /// No description provided for @settingsCopyOnTapSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Copies OTPs to the system clipboard. Turn off to keep codes inside MyTokens.'**
+  String get settingsCopyOnTapSubtitle;
+
   /// No description provided for @settingsAutoLock.
   ///
   /// In en, this message translates to:
@@ -578,10 +602,16 @@ abstract class AppLocalizations {
   /// **'Confirm password'**
   String get fieldPasswordConfirm;
 
+  /// No description provided for @fieldPasswordRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the backup password'**
+  String get fieldPasswordRequired;
+
   /// No description provided for @fieldPasswordTooShort.
   ///
   /// In en, this message translates to:
-  /// **'Use at least 12 characters'**
+  /// **'Use at least 16 characters and avoid common patterns'**
   String get fieldPasswordTooShort;
 
   /// No description provided for @fieldPasswordMismatch.

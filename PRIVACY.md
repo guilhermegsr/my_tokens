@@ -1,6 +1,6 @@
 # MyTokens — Privacy Policy
 
-_Last updated: 2026-05-16_
+_Last updated: 2026-06-12_
 
 MyTokens is an offline TOTP (two-factor authentication) app. This policy
 explains what the app does and does not do with your data.
@@ -20,8 +20,8 @@ Everything stays on your device.
   The backup file is encrypted with a password you choose (Argon2id key
   derivation). You decide where it is saved or shared; the app never uploads
   it anywhere.
-- **App settings** (lock options, theme) are stored locally in a plain file
-  with no personal data.
+- **App settings** (lock options, screen capture preference, theme) are stored
+  locally on your device and contain no personal data.
 
 ## What we do NOT do
 

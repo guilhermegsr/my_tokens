@@ -37,6 +37,24 @@ class BiometricGate extends StatefulWidget {
 
   static bool get _autoLockSuspended => _systemInteractionDepth > 0;
 
+  static Future<bool> requireDeviceAuth(BuildContext context) async {
+    final localAuth = LocalAuthentication();
+    try {
+      if (!await localAuth.isDeviceSupported() || !context.mounted) {
+        return false;
+      }
+      return await localAuth.authenticate(
+        localizedReason: AppLocalizations.of(context).unlockReason,
+        options: const AuthenticationOptions(
+          stickyAuth: true,
+          biometricOnly: false,
+        ),
+      );
+    } on PlatformException {
+      return false;
+    }
+  }
+
   @override
   State<BiometricGate> createState() => _BiometricGateState();
 }
@@ -68,19 +86,26 @@ class _BiometricGateState extends State<BiometricGate>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Our own picker/share sheet backgrounds the app; don't treat that as
-    // the user leaving.
-    if (BiometricGate._autoLockSuspended) return;
-
     final settings = context.read<SettingsStore>();
     if (!settings.lockEnabled) return;
 
-    if (state == AppLifecycleState.paused &&
-        _status == _GateStatus.unlocked) {
+    if (BiometricGate._autoLockSuspended) {
+      if (state == AppLifecycleState.paused &&
+          _status == _GateStatus.unlocked) {
+        _backgroundedAt = DateTime.now();
+        settings.recordBackgrounded();
+      } else if (state == AppLifecycleState.resumed) {
+        _authenticateIfTimeoutExpired(settings);
+      }
+      return;
+    }
+
+    if (state == AppLifecycleState.paused && _status == _GateStatus.unlocked) {
       if (settings.lockTimeout == LockTimeout.immediately) {
         setState(() => _status = _GateStatus.locked);
       } else {
-        // Stay unlocked; recents is already blocked by FLAG_SECURE.
+        // Stay unlocked; recents is protected unless the user explicitly
+        // allowed screen capture for screenshots or screen sharing.
         // Re-locking is decided on resume, or — if the app is killed while
         // away — on the next cold start via the persisted timestamp.
         _backgroundedAt = DateTime.now();
@@ -90,13 +115,19 @@ class _BiometricGateState extends State<BiometricGate>
       if (_status == _GateStatus.locked) {
         _authenticate();
       } else if (_backgroundedAt != null) {
-        final away = DateTime.now().difference(_backgroundedAt!);
-        _backgroundedAt = null;
-        if (away >= settings.lockTimeout.duration) {
-          setState(() => _status = _GateStatus.locked);
-          _authenticate();
-        }
+        _authenticateIfTimeoutExpired(settings);
       }
+    }
+  }
+
+  void _authenticateIfTimeoutExpired(SettingsStore settings) {
+    final backgroundedAt = _backgroundedAt;
+    if (backgroundedAt == null) return;
+    _backgroundedAt = null;
+    final away = DateTime.now().difference(backgroundedAt);
+    if (away >= settings.lockTimeout.duration) {
+      setState(() => _status = _GateStatus.locked);
+      _authenticate();
     }
   }
 
@@ -144,8 +175,11 @@ class _BiometricGateState extends State<BiometricGate>
         ),
       );
       if (mounted) {
-        setState(() => _status =
-            didAuthenticate ? _GateStatus.unlocked : _GateStatus.locked);
+        setState(
+          () => _status = didAuthenticate
+              ? _GateStatus.unlocked
+              : _GateStatus.locked,
+        );
       }
     } on PlatformException {
       if (mounted) setState(() => _status = _GateStatus.locked);
