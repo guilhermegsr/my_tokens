@@ -92,10 +92,23 @@ class _BiometricGateState extends State<BiometricGate>
     if (BiometricGate._autoLockSuspended) {
       if (state == AppLifecycleState.paused &&
           _status == _GateStatus.unlocked) {
-        _backgroundedAt = DateTime.now();
+        // On Android, onActivityResult (file picker / share result) arrives
+        // before onResume, so _systemInteractionDepth is already back to 0
+        // when the resumed lifecycle event fires. That puts the resumed
+        // handler in the non-suspended branch where it calls
+        // _authenticateIfTimeoutExpired — which for `immediately`
+        // (Duration.zero) always fires. Prevent that by not recording
+        // _backgroundedAt when the backgrounding is system-driven: there is
+        // nothing to check on resume (away >= 0 is vacuously true).
+        if (settings.lockTimeout != LockTimeout.immediately) {
+          _backgroundedAt = DateTime.now();
+        }
         settings.recordBackgrounded();
       } else if (state == AppLifecycleState.resumed) {
-        _authenticateIfTimeoutExpired(settings);
+        // Safety valve for the ordering where resumed fires while
+        // _autoLockSuspended is still true: clear the timestamp so
+        // _authenticateIfTimeoutExpired is a no-op.
+        _backgroundedAt = null;
       }
       return;
     }
