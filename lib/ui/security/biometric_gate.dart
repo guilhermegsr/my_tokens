@@ -95,7 +95,13 @@ class _BiometricGateState extends State<BiometricGate>
         _backgroundedAt = DateTime.now();
         settings.recordBackgrounded();
       } else if (state == AppLifecycleState.resumed) {
-        _authenticateIfTimeoutExpired(settings);
+        // The app was backgrounded by a system UI we launched (file picker,
+        // share sheet). Don't lock while that interaction is still in flight —
+        // the withoutAutoLock guard is still active, so locking here would
+        // unmount the page that started the flow before its await completes,
+        // causing a silent abort. Clear the timestamp; the next genuine
+        // background will start a fresh grace-period window.
+        _backgroundedAt = null;
       }
       return;
     }
